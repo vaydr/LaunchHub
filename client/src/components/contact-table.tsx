@@ -39,10 +39,13 @@ export default function ContactTable({
 
   // Get names for a list of connection IDs
   const getConnectionNames = (connectionIds: number[]) => {
+    // Look through all contacts, not just the currently displayed ones
+    const allContacts = contacts.length > 0 ? contacts : [];
     return connectionIds
-      .map(id => contacts.find(c => c.id === id))
-      .filter(c => c !== undefined)
-      .map(c => c!.name);
+      .map(id => {
+        const contact = allContacts.find(c => c.id === id);
+        return contact ? contact.name : `Contact #${id}`;
+      });
   };
 
   if (isLoading) {
@@ -62,7 +65,7 @@ export default function ContactTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {contacts.map((contact) => (
+          {contacts && contacts.length > 0 ? contacts.map((contact) => (
             <TableRow
               key={contact.id}
               className="cursor-pointer hover:bg-muted/50"
@@ -109,9 +112,37 @@ export default function ContactTable({
                 </HoverCard>
               </TableCell>
             </TableRow>
-          ))}
+          )) : (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-4">No contacts found</TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
+      
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center space-x-2 mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <div className="text-sm">
+            Page {currentPage} of {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
 
       <div className="flex justify-center gap-2 mt-4">
         <Button

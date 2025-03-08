@@ -25,6 +25,10 @@ export default function Contacts() {
     queryFn: () => {
       const params = new URLSearchParams();
       if (searchParams.query) params.append('query', searchParams.query);
+      
+      // Add pagination params
+      if (searchParams.page) params.append('page', searchParams.page.toString());
+      if (searchParams.limit) params.append('limit', searchParams.limit.toString());
 
       if (searchParams.departments) {
         searchParams.departments.forEach(dept => 
@@ -46,6 +50,11 @@ export default function Contacts() {
   if (connectionFilter.length > 0) {
     filteredContacts = contacts?.filter(contact => connectionFilter.includes(contact.id));
   }
+
+  // Include page in search params to ensure we're getting the right data
+  useEffect(() => {
+    setSearchParams(prev => ({ ...prev, page: currentPage, limit: ITEMS_PER_PAGE }));
+  }, [currentPage]);
 
   // Paginate the filtered contacts
   const paginatedContacts = filteredContacts?.slice(
