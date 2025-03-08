@@ -1,5 +1,6 @@
 import { contacts, type Contact, type InsertContact } from "@shared/schema";
 import type { SearchParams } from "@shared/schema";
+import { faker } from '@faker-js/faker';
 
 export interface IStorage {
   getContact(id: number): Promise<Contact | undefined>;
@@ -19,42 +20,106 @@ export class MemStorage implements IStorage {
   }
 
   private initializeMockData() {
-    // Generate 200 mock contacts
     const departments = ['EECS', 'Biology', 'Physics', 'Mathematics', 'Chemistry', 'Mechanical Engineering'];
     const roles = ['Undergraduate', 'Graduate Student', 'Professor', 'Research Scientist', 'Postdoc'];
-    const years = [2024, 2025, 2026, 2027, null]; // null for faculty/staff
+    const years = [2024, 2025, 2026, 2027];
+
+    // Generate clusters of people who are more likely to be connected
+    const clusters = departments.map(dept => ({
+      department: dept,
+      members: new Set<number>()
+    }));
 
     const mockContacts: InsertContact[] = Array.from({ length: 200 }, (_, i) => {
       const id = i + 1;
       const department = departments[Math.floor(Math.random() * departments.length)];
       const role = roles[Math.floor(Math.random() * roles.length)];
-      const year = role === 'Undergraduate' ? years[Math.floor(Math.random() * (years.length - 1))] : null;
+      const year = role === 'Undergraduate' ? years[Math.floor(Math.random() * years.length)] : years[0];
 
-      // Generate 10-20 random connections for each person
-      const numConnections = 10 + Math.floor(Math.random() * 10);
-      const connections = Array.from({ length: numConnections }, () =>
-        1 + Math.floor(Math.random() * 200) // Random IDs from 1-200
-      ).filter(connId => connId !== id); // Remove self-connections
+      // Add to department cluster
+      const cluster = clusters.find(c => c.department === department);
+      if (cluster) {
+        cluster.members.add(id);
+      }
 
+      // Generate realistic name
+      const firstName = faker.person.firstName();
+      const lastName = faker.person.lastName();
+      const name = `${firstName} ${lastName}`;
+
+      // Generate realistic kerberos (first letter of first name + up to 7 chars of last name)
+      const kerberos = (firstName[0] + lastName).toLowerCase().slice(0, 8);
+
+      // Generate more realistic room numbers based on MIT building numbers
+      const buildingNum = Math.floor(Math.random() * 38) + 1;
+      const roomNum = Math.floor(Math.random() * 999);
+      const office = `${buildingNum}-${String(roomNum).padStart(3, '0')}`;
+
+      // Generate research interests based on department
+      const researchAreas = {
+        'EECS': ['Artificial Intelligence', 'Computer Systems', 'Robotics', 'Computer Security', 'Machine Learning'],
+        'Biology': ['Synthetic Biology', 'Neuroscience', 'Genetics', 'Cell Biology', 'Systems Biology'],
+        'Physics': ['Quantum Computing', 'Particle Physics', 'Astrophysics', 'Condensed Matter', 'Nuclear Physics'],
+        'Mathematics': ['Number Theory', 'Topology', 'Applied Mathematics', 'Statistical Learning', 'Combinatorics'],
+        'Chemistry': ['Organic Chemistry', 'Materials Science', 'Physical Chemistry', 'Biochemistry', 'Inorganic Chemistry'],
+        'Mechanical Engineering': ['Robotics', 'Fluid Dynamics', 'Thermodynamics', 'Control Systems', 'Manufacturing']
+      };
+
+      const areas = researchAreas[department];
+      const researchArea = areas[Math.floor(Math.random() * areas.length)];
+
+      // Everyone has all contact methods
       return {
-        name: `Person ${id}`,
-        kerberos: `person${id}`,
-        email: `person${id}@mit.edu`,
+        name,
+        kerberos,
+        email: `${kerberos}@mit.edu`,
         department,
         year,
         role,
         contactMethods: {
-          phone: Math.random() > 0.5 ? `617-555-${String(1000 + id).padStart(4, '0')}` : undefined,
-          slack: Math.random() > 0.5 ? `@person${id}` : undefined,
-          office: Math.random() > 0.5 ? `${Math.floor(Math.random() * 38)}-${Math.floor(Math.random() * 999)}` : undefined
+          phone: `617-${String(Math.floor(Math.random() * 900) + 100)}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+          slack: `@${kerberos}`,
+          office,
         },
-        notes: Math.random() > 0.7 ? `Research interests in ${department} specializing in area ${Math.floor(Math.random() * 5) + 1}` : undefined,
+        notes: `Research interests in ${researchArea}`,
         interactionStrength: Math.floor(Math.random() * 10),
-        connections: Array.from(new Set(connections)) // Remove duplicates
+        connections: [] // Will be populated after all contacts are created
       };
     });
 
+    // Create all contacts first
     mockContacts.forEach(contact => this.createContact(contact));
+
+    // Now generate connections
+    // People are more likely to be connected to others in their department and year
+    this.contacts.forEach((contact) => {
+      const connections = new Set<number>();
+      const sameCluster = clusters.find(c => c.department === contact.department)?.members || new Set();
+
+      // Add 15-25 connections
+      const targetConnections = 15 + Math.floor(Math.random() * 10);
+
+      // First add connections within same department (60% chance)
+      Array.from(sameCluster).forEach(otherId => {
+        if (otherId !== contact.id && Math.random() < 0.6) {
+          connections.add(otherId);
+        }
+      });
+
+      // Then add random connections until we reach target
+      while (connections.size < targetConnections) {
+        const randomId = Math.floor(Math.random() * 200) + 1;
+        if (randomId !== contact.id) {
+          connections.add(randomId);
+        }
+      }
+
+      // Update the contact with connections
+      this.updateContact(contact.id, {
+        ...contact,
+        connections: Array.from(connections)
+      });
+    });
   }
 
   async getContact(id: number): Promise<Contact | undefined> {
@@ -73,31 +138,26 @@ export class MemStorage implements IStorage {
       );
     }
 
-    // Support for multiple departments
     if (params.departments && params.departments.length > 0) {
       results = results.filter(contact =>
         params.departments!.includes(contact.department)
       );
     } else if (params.department) {
-      // Backward compatibility for single department
       results = results.filter(contact =>
         contact.department === params.department
       );
     }
 
-    // Support for multiple years
     if (params.years && params.years.length > 0) {
       results = results.filter(contact =>
         contact.year && params.years!.includes(contact.year)
       );
     } else if (params.year) {
-      // Backward compatibility for single year
       results = results.filter(contact =>
         contact.year === params.year
       );
     }
 
-    // Pagination
     const limit = params.limit || 10;
     const page = params.page || 1;
     const start = (page - 1) * limit;

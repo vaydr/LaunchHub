@@ -16,6 +16,7 @@ export default function Contacts() {
     page: 1,
     limit: 10
   });
+  const [connectionFilter, setConnectionFilter] = useState<number[]>([]);
 
   const { data: contacts, isLoading } = useQuery({
     queryKey: ['/api/contacts', searchParams],
@@ -23,7 +24,6 @@ export default function Contacts() {
       const params = new URLSearchParams();
       if (searchParams.query) params.append('query', searchParams.query);
 
-      // Handle array parameters
       if (searchParams.departments) {
         searchParams.departments.forEach(dept => 
           params.append('departments', dept)
@@ -42,6 +42,11 @@ export default function Contacts() {
     }
   });
 
+  // Filter contacts based on connections if connectionFilter is active
+  const filteredContacts = contacts && connectionFilter.length > 0
+    ? contacts.filter(contact => connectionFilter.includes(contact.id))
+    : contacts;
+
   useEffect(() => {
     const handleScroll = () => {
       if (overlayRef.current) {
@@ -59,7 +64,7 @@ export default function Contacts() {
   }, []);
 
   return (
-    <div className="min-h-[300vh] bg-background"> {/* Increased height to allow more scrolling */}
+    <div className="min-h-[300vh] bg-background">
       <div className="container mx-auto py-8 px-4">
         <Button 
           variant="ghost" 
@@ -75,6 +80,16 @@ export default function Contacts() {
             <CardTitle className="text-2xl font-bold flex items-center gap-2">
               <Search className="h-6 w-6 text-primary" />
               Directory Search
+              {connectionFilter.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConnectionFilter([])}
+                  className="ml-auto text-sm"
+                >
+                  Clear Connection Filter
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -82,10 +97,11 @@ export default function Contacts() {
               onSearch={(params) => setSearchParams(prev => ({ ...prev, ...params, page: 1 }))}
             />
             <ContactTable
-              contacts={contacts || []}
+              contacts={filteredContacts || []}
               isLoading={isLoading}
               onPageChange={(page) => setSearchParams(prev => ({ ...prev, page }))}
               currentPage={searchParams.page || 1}
+              onFilterConnections={setConnectionFilter}
             />
           </CardContent>
         </Card>
@@ -105,7 +121,7 @@ export default function Contacts() {
       >
         <div className="container mx-auto px-4 py-24">
           <h2 className="text-4xl font-bold mb-8 text-white">Network Visualization</h2>
-          {contacts && <NetworkGraph contacts={contacts} />}
+          {contacts && <NetworkGraph contacts={filteredContacts || contacts} />}
         </div>
       </div>
     </div>
