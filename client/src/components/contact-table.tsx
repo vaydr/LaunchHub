@@ -15,7 +15,6 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import type { Contact } from "@shared/schema";
-import { useState } from "react";
 
 interface ContactTableProps {
   contacts: Contact[];
@@ -91,7 +90,7 @@ export default function ContactTable({
                         onClick={() => onFilterConnections(contact.id)}
                       >
                         <Share2 className={`h-4 w-4 mr-2 ${isActive ? 'text-primary' : ''}`} />
-                        {connectionNames.length}
+                        {contact.connections?.length || 0}
                       </Button>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-80">
