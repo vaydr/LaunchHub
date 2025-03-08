@@ -36,8 +36,6 @@ export class MemStorage implements IStorage {
       const name = `${firstName} ${lastName}`;
       const kerberos = (firstName[0] + lastName).toLowerCase().slice(0, 8);
 
-      const office = `${Math.floor(Math.random() * 38) + 1}-${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`;
-
       this.contacts.set(id, {
         id,
         name,
@@ -49,7 +47,7 @@ export class MemStorage implements IStorage {
         contactMethods: {
           phone: faker.phone.number('617-###-####'),
           slack: `@${kerberos}`,
-          office,
+          office: `${Math.floor(Math.random() * 38) + 1}-${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`,
         },
         notes: `Research interests in ${department}`,
         interactionStrength: 0,
@@ -58,43 +56,39 @@ export class MemStorage implements IStorage {
       });
     }
 
-    // Now add connections
-    const addConnection = (id1: number, id2: number) => {
-      const contact1 = this.contacts.get(id1)!;
-      const contact2 = this.contacts.get(id2)!;
+    // Now establish connections
+    const allIds = Array.from(this.contacts.keys());
 
-      // Add bidirectional connection if it doesn't exist
-      if (!contact1.connections.includes(id2)) {
-        contact1.connections.push(id2);
-      }
-      if (!contact2.connections.includes(id1)) {
-        contact2.connections.push(id1);
-      }
-    };
-
-    // For each contact, add 5-10 connections
-    Array.from(this.contacts.keys()).forEach(id => {
-      const numConnections = 5 + Math.floor(Math.random() * 6);
+    allIds.forEach(id => {
       const contact = this.contacts.get(id)!;
 
-      // Prioritize department connections (60% chance)
-      const departmentContacts = Array.from(this.contacts.values())
-        .filter(c => c.id !== id && c.department === contact.department);
+      // Choose 5-8 random connections for each person
+      const numConnections = 5 + Math.floor(Math.random() * 4);
 
-      for (const deptContact of departmentContacts) {
-        if (contact.connections.length >= numConnections) break;
-        if (Math.random() < 0.6) {
-          addConnection(id, deptContact.id);
-        }
-      }
+      // Shuffle all other IDs to get random connections
+      const possibleConnections = allIds
+        .filter(otherId => otherId !== id)
+        .sort(() => Math.random() - 0.5);
 
-      // Fill remaining slots with random connections
-      while (contact.connections.length < numConnections) {
-        const randomId = Math.floor(Math.random() * 200) + 1;
-        if (randomId !== id && !contact.connections.includes(randomId)) {
-          addConnection(id, randomId);
+      // Take the first numConnections IDs
+      const connections = possibleConnections.slice(0, numConnections);
+
+      // Update this contact's connections
+      this.contacts.set(id, {
+        ...contact,
+        connections
+      });
+
+      // Add reciprocal connections
+      connections.forEach(otherId => {
+        const otherContact = this.contacts.get(otherId)!;
+        if (!otherContact.connections.includes(id)) {
+          this.contacts.set(otherId, {
+            ...otherContact,
+            connections: [...otherContact.connections, id]
+          });
         }
-      }
+      });
     });
   }
 
