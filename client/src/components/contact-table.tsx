@@ -54,60 +54,54 @@ export default function ContactTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {contacts.map((contact) => {
-            // Get all connected contacts
-            const connectedContacts = contact.connections
-              .map(id => contacts.find(c => c.id === id))
-              .filter((c): c is Contact => c !== undefined);
-
-            return (
-              <TableRow
-                key={contact.id}
-                className="cursor-pointer hover:bg-muted/50"
+          {contacts.map((contact) => (
+            <TableRow
+              key={contact.id}
+              className="cursor-pointer hover:bg-muted/50"
+            >
+              <TableCell
+                className="font-medium"
+                onClick={() => setLocation(`/contact/${contact.id}`)}
               >
-                <TableCell
-                  className="font-medium"
-                  onClick={() => setLocation(`/contact/${contact.id}`)}
-                >
-                  {contact.name}
-                </TableCell>
-                <TableCell>{contact.kerberos}</TableCell>
-                <TableCell>{contact.department}</TableCell>
-                <TableCell>{contact.year}</TableCell>
-                <TableCell>
-                  <HoverCard>
-                    <HoverCardTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="font-mono"
-                        onClick={() => onFilterConnections(contact.id)}
-                      >
-                        <Share2 
-                          className={`h-4 w-4 mr-2 ${
-                            activeConnectionFilter === contact.id ? 'text-primary' : ''
-                          }`}
-                        />
-                        {connectedContacts.length}
-                      </Button>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-80">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-semibold">Connected to {connectedContacts.length} people:</h4>
-                        <div className="text-sm text-muted-foreground">
-                          {connectedContacts.map(connection => (
-                            <div key={connection.id} className="py-1">
-                              {connection.name}
-                            </div>
-                          ))}
-                        </div>
+                {contact.name}
+              </TableCell>
+              <TableCell>{contact.kerberos}</TableCell>
+              <TableCell>{contact.department}</TableCell>
+              <TableCell>{contact.year}</TableCell>
+              <TableCell>
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="font-mono"
+                      onClick={() => onFilterConnections(contact.id)}
+                    >
+                      <Share2 
+                        className={`h-4 w-4 mr-2 ${
+                          activeConnectionFilter === contact.id ? 'text-primary' : ''
+                        }`}
+                      />
+                      {contact.connections.length}
+                    </Button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-80">
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-semibold">Connected to {contact.connections.length} people:</h4>
+                      <div className="text-sm text-muted-foreground">
+                        {contact.connections.map(id => {
+                          const connected = contacts.find(c => c.id === id);
+                          return connected ? (
+                            <div key={id} className="py-1">{connected.name}</div>
+                          ) : null;
+                        })}
                       </div>
-                    </HoverCardContent>
-                  </HoverCard>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
 

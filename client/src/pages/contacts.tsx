@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -6,12 +6,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
 import ContactTable from "@/components/contact-table";
 import SearchFilters from "@/components/search-filters";
-import NetworkGraph from "@/components/network-graph";
 import type { SearchParams, Contact } from "@shared/schema";
 
 export default function Contacts() {
   const [_, setLocation] = useLocation();
-  const overlayRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useState<SearchParams>({
     query: "",
     departments: [],
@@ -26,35 +24,29 @@ export default function Contacts() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchParams.query) params.append('query', searchParams.query);
-
       if (searchParams.departments) {
-        searchParams.departments.forEach(dept => 
-          params.append('departments', dept)
-        );
+        searchParams.departments.forEach(dept => params.append('departments', dept));
       }
-
       if (searchParams.years) {
-        searchParams.years.forEach(year => 
-          params.append('years', year.toString())
-        );
+        searchParams.years.forEach(year => params.append('years', year.toString()));
       }
-
       return fetch(`/api/contacts?${params}`).then(res => res.json());
     }
   });
 
   // Filter contacts if showing connections for a specific person
   let displayContacts = contacts;
-  const activePerson = activeConnectionFilter ? contacts.find(c => c.id === activeConnectionFilter) : null;
-
-  if (activePerson) {
-    // Filter to only show contacts that this person is connected to
-    displayContacts = contacts.filter(contact => 
-      activePerson.connections.includes(contact.id)
-    );
+  if (activeConnectionFilter) {
+    const activePerson = contacts.find(c => c.id === activeConnectionFilter);
+    if (activePerson) {
+      // Only show contacts that are in the active person's connections array
+      displayContacts = contacts.filter(contact => 
+        activePerson.connections.includes(contact.id)
+      );
+    }
   }
 
-  // Paginate the contacts for the table
+  // Paginate contacts
   const paginatedContacts = displayContacts.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -67,23 +59,8 @@ export default function Contacts() {
     setCurrentPage(1);
   }, [searchParams, activeConnectionFilter]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (overlayRef.current) {
-        const scrolled = window.scrollY;
-        const viewportHeight = window.innerHeight;
-        const threshold = viewportHeight * 0.75;
-        const translateY = Math.max(0, viewportHeight - (scrolled - threshold));
-        overlayRef.current.style.transform = `translateY(${translateY}px)`;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
-    <div className="min-h-[300vh] bg-background">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
         <Button 
           variant="ghost" 
@@ -104,7 +81,10 @@ export default function Contacts() {
           <CardContent>
             <SearchFilters
               onSearch={setSearchParams}
-              connectionPerson={activePerson ? { id: activePerson.id, name: activePerson.name } : null}
+              connectionPerson={activeConnectionFilter ? { 
+                id: activeConnectionFilter, 
+                name: contacts.find(c => c.id === activeConnectionFilter)?.name || '' 
+              } : null}
               onClearConnectionFilter={() => setActiveConnectionFilter(null)}
             />
             <ContactTable
@@ -118,22 +98,6 @@ export default function Contacts() {
             />
           </CardContent>
         </Card>
-
-        <div className="h-screen" />
-      </div>
-
-      <div 
-        ref={overlayRef}
-        className="fixed inset-0 bg-black/95"
-        style={{ 
-          transform: 'translateY(100vh)',
-          transition: 'transform 0.3s ease-out'
-        }}
-      >
-        <div className="container mx-auto px-4 py-24">
-          <h2 className="text-4xl font-bold mb-8 text-white">Network Visualization</h2>
-          <NetworkGraph contacts={displayContacts} />
-        </div>
       </div>
     </div>
   );
