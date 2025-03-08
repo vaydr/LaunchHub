@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Search } from "lucide-react";
 import ContactTable from "@/components/contact-table";
 import SearchFilters from "@/components/search-filters";
+import NetworkGraph from "@/components/network-graph";
 import type { SearchParams } from "@shared/schema";
 
 export default function Contacts() {
+  const [_, setLocation] = useLocation();
+  const overlayRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useState<SearchParams>({
     page: 1,
     limit: 10
@@ -37,9 +42,32 @@ export default function Contacts() {
     }
   });
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (overlayRef.current) {
+        const scrolled = window.scrollY;
+        const viewportHeight = window.innerHeight;
+        const translateY = Math.max(0, viewportHeight - scrolled);
+        overlayRef.current.style.transform = `translateY(${translateY}px)`;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[200vh] bg-background">
       <div className="container mx-auto py-8 px-4">
+        <Button 
+          variant="ghost" 
+          className="mb-4"
+          onClick={() => setLocation("/")}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Home
+        </Button>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl font-bold flex items-center gap-2">
@@ -59,6 +87,21 @@ export default function Contacts() {
             />
           </CardContent>
         </Card>
+      </div>
+
+      {/* Network Visualization Overlay */}
+      <div 
+        ref={overlayRef}
+        className="fixed inset-0 bg-black/95"
+        style={{ 
+          transform: 'translateY(100vh)',
+          transition: 'transform 0.1s linear'
+        }}
+      >
+        <div className="container mx-auto px-4 py-24">
+          <h2 className="text-4xl font-bold mb-8 text-white">Network Visualization</h2>
+          {contacts && <NetworkGraph contacts={contacts} />}
+        </div>
       </div>
     </div>
   );

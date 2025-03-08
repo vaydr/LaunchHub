@@ -23,10 +23,44 @@ export default function Home() {
 
   return (
     <div className="relative min-h-[200vh]">
-      {/* Animated Background */}
+      {/* Tech-themed Animated Background */}
       <div className="fixed inset-0 bg-gradient-to-br from-purple-600 via-purple-900 to-indigo-900 animate-gradient">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent)] animate-pulse"></div>
+        <div className="absolute inset-0 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] opacity-10">
+          {Array.from({ length: 100 }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-square border border-white/10 animate-pulse"
+              style={{
+                animationDelay: `${Math.random() * 4}s`,
+                animationDuration: `${4 + Math.random() * 4}s`
+              }}
+            />
+          ))}
+        </div>
+        <div className="absolute inset-0 animate-matrix">
+          <svg className="w-full h-full opacity-5">
+            <pattern
+              id="matrix"
+              x="0"
+              y="0"
+              width="20"
+              height="20"
+              patternUnits="userSpaceOnUse"
+            >
+              <rect width="20" height="20" fill="none" />
+              <text
+                x="10"
+                y="10"
+                fontSize="10"
+                fill="currentColor"
+                textAnchor="middle"
+                dominantBaseline="middle"
+              >
+                ⚡
+              </text>
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#matrix)" />
+          </svg>
         </div>
       </div>
 
