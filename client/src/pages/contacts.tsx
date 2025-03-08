@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -8,6 +8,8 @@ import ContactTable from "@/components/contact-table";
 import SearchFilters from "@/components/search-filters";
 import type { SearchParams } from "@shared/schema";
 
+const ITEMS_PER_PAGE = 10;
+
 export default function Contacts() {
   const [_, setLocation] = useLocation();
   const [searchParams, setSearchParams] = useState<SearchParams>({
@@ -15,6 +17,7 @@ export default function Contacts() {
     departments: [],
     years: []
   });
+  const [currentPage, setCurrentPage] = useState(1);
   const [activeConnectionFilter, setActiveConnectionFilter] = useState<number | null>(null);
 
   const { data: contacts = [], isLoading } = useQuery({
@@ -31,6 +34,38 @@ export default function Contacts() {
       return fetch(`/api/contacts?${params}`).then(res => res.json());
     }
   });
+
+  // Single source of truth for filtered contacts and pagination
+  const { paginatedContacts, totalPages, adjustedCurrentPage } = useMemo(() => {
+    // Apply connection filter if active
+    const filtered = activeConnectionFilter 
+      ? contacts.filter(contact => {
+          const activePerson = contacts.find(c => c.id === activeConnectionFilter);
+          return activePerson?.connections.includes(contact.id);
+        })
+      : contacts;
+
+    // Calculate total pages
+    const total = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+
+    // Ensure current page is valid for the filtered set
+    const adjustedPage = Math.min(currentPage, total || 1);
+
+    // Calculate slice indices based on adjusted page
+    const start = (adjustedPage - 1) * ITEMS_PER_PAGE;
+    const paginated = filtered.slice(start, start + ITEMS_PER_PAGE);
+
+    return {
+      paginatedContacts: paginated,
+      totalPages: total,
+      adjustedCurrentPage: adjustedPage
+    };
+  }, [contacts, activeConnectionFilter, currentPage]);
+
+  // If the adjusted page is different from current page, update it
+  if (adjustedCurrentPage !== currentPage) {
+    setCurrentPage(adjustedCurrentPage);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,15 +89,18 @@ export default function Contacts() {
           <CardContent>
             <SearchFilters
               onSearch={setSearchParams}
-              connectionPerson={activeConnectionFilter ? {
-                id: activeConnectionFilter,
-                name: contacts.find(c => c.id === activeConnectionFilter)?.name || ''
+              connectionPerson={activeConnectionFilter ? { 
+                id: activeConnectionFilter, 
+                name: contacts.find(c => c.id === activeConnectionFilter)?.name || '' 
               } : null}
               onClearConnectionFilter={() => setActiveConnectionFilter(null)}
             />
             <ContactTable
-              contacts={contacts}
+              contacts={paginatedContacts}
               isLoading={isLoading}
+              currentPage={adjustedCurrentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
               onFilterConnections={setActiveConnectionFilter}
               activeConnectionFilter={activeConnectionFilter}
             />

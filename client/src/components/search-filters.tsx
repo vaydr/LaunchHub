@@ -28,14 +28,14 @@ interface FilterTag {
 
 interface SearchFiltersProps {
   onSearch: (params: Partial<SearchParams>) => void;
-  connectionPeople: { id: number; name: string }[];
-  onClearConnectionFilters: () => void;
+  connectionPerson: { id: number; name: string } | null;
+  onClearConnectionFilter: () => void;
 }
 
 export default function SearchFilters({ 
   onSearch, 
-  connectionPeople,
-  onClearConnectionFilters
+  connectionPerson,
+  onClearConnectionFilter
 }: SearchFiltersProps) {
   const [query, setQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<FilterTag[]>([]);
@@ -58,26 +58,21 @@ export default function SearchFilters({
     });
   }, [query, selectedFilters, onSearch]);
 
-  // Update filters when connection people change
+  // Update filters when connection person changes
   useEffect(() => {
-    if (connectionPeople.length > 0) {
+    if (connectionPerson) {
       setSelectedFilters(prev => {
         const withoutConnections = prev.filter(f => f.type !== 'connection');
-        
-        // Create a single connection filter with all names
-        const connectionNames = connectionPeople.map(p => p.name).join(', ');
-        const connectionFilter = {
-          type: 'connection' as const,
-          value: connectionPeople.map(p => p.id).join(','),
-          label: `Connected to: ${connectionNames}`
-        };
-        
-        return [...withoutConnections, connectionFilter];
+        return [...withoutConnections, {
+          type: 'connection',
+          value: connectionPerson.id.toString(),
+          label: `Connected to: ${connectionPerson.name}`
+        }];
       });
     } else {
       setSelectedFilters(prev => prev.filter(f => f.type !== 'connection'));
     }
-  }, [connectionPeople]);
+  }, [connectionPerson]);
 
   const handleAddFilter = (type: 'department' | 'year', value: string) => {
     if (!selectedFilters.some(f => f.type === type && f.value === value)) {
@@ -87,7 +82,7 @@ export default function SearchFilters({
 
   const handleRemoveFilter = (filter: FilterTag) => {
     if (filter.type === 'connection') {
-      onClearConnectionFilters();
+      onClearConnectionFilter();
     } else {
       setSelectedFilters(prev => 
         prev.filter(f => !(f.type === filter.type && f.value === filter.value))
