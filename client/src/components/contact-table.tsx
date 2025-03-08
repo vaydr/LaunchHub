@@ -9,11 +9,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import type { Contact } from "@shared/schema";
 
 interface ContactTableProps {
@@ -69,36 +64,19 @@ export default function ContactTable({
               <TableCell>{contact.department}</TableCell>
               <TableCell>{contact.year}</TableCell>
               <TableCell>
-                <HoverCard>
-                  <HoverCardTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="font-mono"
-                      onClick={() => onFilterConnections(contact.id)}
-                    >
-                      <Share2 
-                        className={`h-4 w-4 mr-2 ${
-                          activeConnectionFilter === contact.id ? 'text-primary' : ''
-                        }`}
-                      />
-                      {contact.connections.length}
-                    </Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="w-80">
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-semibold">Connected to {contact.connections.length} people:</h4>
-                      <div className="text-sm text-muted-foreground">
-                        {contact.connections.map(id => {
-                          const connected = contacts.find(c => c.id === id);
-                          return connected ? (
-                            <div key={id} className="py-1">{connected.name}</div>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="font-mono"
+                  onClick={() => onFilterConnections(contact.id)}
+                >
+                  <Share2 
+                    className={`h-4 w-4 mr-2 ${
+                      activeConnectionFilter === contact.id ? 'text-primary' : ''
+                    }`}
+                  />
+                  {contact.connections.length}
+                </Button>
               </TableCell>
             </TableRow>
           ))}

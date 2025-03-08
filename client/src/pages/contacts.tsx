@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
 import ContactTable from "@/components/contact-table";
 import SearchFilters from "@/components/search-filters";
-import type { SearchParams, Contact } from "@shared/schema";
+import type { SearchParams } from "@shared/schema";
 
 export default function Contacts() {
   const [_, setLocation] = useLocation();
@@ -39,7 +39,6 @@ export default function Contacts() {
   if (activeConnectionFilter) {
     const activePerson = contacts.find(c => c.id === activeConnectionFilter);
     if (activePerson) {
-      // Only show contacts that are in the active person's connections array
       displayContacts = contacts.filter(contact => 
         activePerson.connections.includes(contact.id)
       );
