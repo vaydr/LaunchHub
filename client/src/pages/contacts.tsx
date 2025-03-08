@@ -18,7 +18,7 @@ export default function Contacts() {
     years: []
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeConnectionFilter, setActiveConnectionFilter] = useState<number | null>(null);
+  const [activeConnectionFilters, setActiveConnectionFilters] = useState<number[]>([]);
 
   const { data: contacts = [], isLoading } = useQuery({
     queryKey: ['/api/contacts', searchParams],
@@ -38,10 +38,12 @@ export default function Contacts() {
   // Single source of truth for filtered contacts and pagination
   const { paginatedContacts, totalPages, adjustedCurrentPage } = useMemo(() => {
     // Apply connection filter if active
-    const filtered = activeConnectionFilter 
+    const filtered = activeConnectionFilters.length > 0
       ? contacts.filter(contact => {
-          const activePerson = contacts.find(c => c.id === activeConnectionFilter);
-          return activePerson?.connections.includes(contact.id);
+          return activeConnectionFilters.some(filterId => {
+            const activePerson = contacts.find(c => c.id === filterId);
+            return activePerson?.connections.includes(contact.id);
+          });
         })
       : contacts;
 
@@ -60,7 +62,7 @@ export default function Contacts() {
       totalPages: total,
       adjustedCurrentPage: adjustedPage
     };
-  }, [contacts, activeConnectionFilter, currentPage]);
+  }, [contacts, activeConnectionFilters, currentPage]);
 
   // If the adjusted page is different from current page, update it
   if (adjustedCurrentPage !== currentPage) {
@@ -89,11 +91,21 @@ export default function Contacts() {
           <CardContent>
             <SearchFilters
               onSearch={setSearchParams}
-              connectionPerson={activeConnectionFilter ? { 
-                id: activeConnectionFilter, 
-                name: contacts.find(c => c.id === activeConnectionFilter)?.name || '' 
-              } : null}
-              onClearConnectionFilter={() => setActiveConnectionFilter(null)}
+              connectionPeople={activeConnectionFilters.map(id => ({
+                id,
+                name: contacts.find(c => c.id === id)?.name || ''
+              }))}
+              onClearConnectionFilters={() => {
+                setActiveConnectionFilters([]);
+                setCurrentPage(1); // Reset to page 1 when clearing connection filters
+              }}
+              onFilterConnections={id => {
+                if (activeConnectionFilters.includes(id)) {
+                  setActiveConnectionFilters(activeConnectionFilters.filter(filterId => filterId !== id));
+                } else {
+                  setActiveConnectionFilters([...activeConnectionFilters, id]);
+                }
+              }}
             />
             <ContactTable
               contacts={paginatedContacts}
@@ -101,8 +113,14 @@ export default function Contacts() {
               currentPage={adjustedCurrentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
-              onFilterConnections={setActiveConnectionFilter}
-              activeConnectionFilter={activeConnectionFilter}
+              onFilterConnections={id => {
+                if (activeConnectionFilters.includes(id)) {
+                  setActiveConnectionFilters(activeConnectionFilters.filter(filterId => filterId !== id));
+                } else {
+                  setActiveConnectionFilters([...activeConnectionFilters, id]);
+                }
+              }}
+              activeConnectionFilter={activeConnectionFilters}
             />
           </CardContent>
         </Card>

@@ -18,7 +18,7 @@ interface ContactTableProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   onFilterConnections: (id: number) => void;
-  activeConnectionFilter: number | null;
+  activeConnectionFilters: number[];
 }
 
 export default function ContactTable({
@@ -72,7 +72,7 @@ export default function ContactTable({
                 >
                   <Share2 
                     className={`h-4 w-4 mr-2 ${
-                      activeConnectionFilter === contact.id ? 'text-primary' : ''
+                      activeConnectionFilters.includes(contact.id) ? 'text-primary' : ''
                     }`}
                   />
                   {contact.connections.length}
