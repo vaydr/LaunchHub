@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { X } from "lucide-react";
 import type { SearchParams } from "@shared/schema";
 
 const DEPARTMENTS = [
@@ -23,17 +24,44 @@ interface SearchFiltersProps {
   onSearch: (params: Partial<SearchParams>) => void;
 }
 
+interface FilterTag {
+  type: 'department' | 'year';
+  value: string;
+}
+
 export default function SearchFilters({ onSearch }: SearchFiltersProps) {
   const [query, setQuery] = useState("");
-  const [department, setDepartment] = useState<string | undefined>();
-  const [year, setYear] = useState<string | undefined>();
+  const [selectedFilters, setSelectedFilters] = useState<FilterTag[]>([]);
 
-  const handleSearch = () => {
+  // When filters change, trigger search
+  useEffect(() => {
+    const departments = selectedFilters
+      .filter(f => f.type === 'department')
+      .map(f => f.value);
+
+    const years = selectedFilters
+      .filter(f => f.type === 'year')
+      .map(f => parseInt(f.value))
+      .filter(year => !isNaN(year));
+
     onSearch({
       query,
-      department,
-      year: year ? parseInt(year) : undefined,
+      department: departments.length > 0 ? departments[0] : undefined, // For now, use first department since backend doesn't support multiple
+      year: years.length > 0 ? years[0] : undefined, // For now, use first year since backend doesn't support multiple
     });
+  }, [query, selectedFilters, onSearch]);
+
+  const handleAddFilter = (type: 'department' | 'year', value: string) => {
+    // Don't add if already exists
+    if (!selectedFilters.some(f => f.type === type && f.value === value)) {
+      setSelectedFilters(prev => [...prev, { type, value }]);
+    }
+  };
+
+  const handleRemoveFilter = (filter: FilterTag) => {
+    setSelectedFilters(prev => 
+      prev.filter(f => !(f.type === filter.type && f.value === filter.value))
+    );
   };
 
   return (
@@ -47,11 +75,11 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
         />
 
         <Select
-          value={department}
-          onValueChange={setDepartment}
+          value=""
+          onValueChange={(value) => handleAddFilter('department', value)}
         >
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Department" />
+            <SelectValue placeholder="Add Department" />
           </SelectTrigger>
           <SelectContent>
             {DEPARTMENTS.map((dept) => (
@@ -63,11 +91,11 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
         </Select>
 
         <Select
-          value={year}
-          onValueChange={setYear}
+          value=""
+          onValueChange={(value) => handleAddFilter('year', value)}
         >
           <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Year" />
+            <SelectValue placeholder="Add Year" />
           </SelectTrigger>
           <SelectContent>
             {[2024, 2025, 2026, 2027].map((y) => (
@@ -77,11 +105,29 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
             ))}
           </SelectContent>
         </Select>
-
-        <Button onClick={handleSearch}>
-          Search
-        </Button>
       </div>
+
+      {/* Filter Tags */}
+      {selectedFilters.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedFilters.map((filter, index) => (
+            <div
+              key={`${filter.type}-${filter.value}-${index}`}
+              className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-sm"
+            >
+              <span className="capitalize">{filter.type}: {filter.value}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 rounded-full hover:bg-primary/20"
+                onClick={() => handleRemoveFilter(filter)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
