@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -35,25 +35,27 @@ export default function Contacts() {
     }
   });
 
-  // Memoize filtered contacts to prevent recalculation on every render
-  const filteredContacts = useMemo(() => {
-    if (!activeConnectionFilter) return contacts;
+  // Single source of truth for filtered contacts
+  const { filteredContacts, paginatedContacts, totalPages } = useMemo(() => {
+    // Apply connection filter if active
+    const filtered = activeConnectionFilter 
+      ? contacts.filter(contact => {
+          const activePerson = contacts.find(c => c.id === activeConnectionFilter);
+          return activePerson?.connections.includes(contact.id);
+        })
+      : contacts;
 
-    const activePerson = contacts.find(c => c.id === activeConnectionFilter);
-    if (!activePerson) return contacts;
+    // Calculate pagination
+    const total = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginated = filtered.slice(start, Math.min(start + ITEMS_PER_PAGE, filtered.length));
 
-    return contacts.filter(contact => activePerson.connections.includes(contact.id));
-  }, [contacts, activeConnectionFilter]);
-
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredContacts.length / ITEMS_PER_PAGE);
-  const start = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedContacts = filteredContacts.slice(start, start + ITEMS_PER_PAGE);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchParams, activeConnectionFilter]);
+    return {
+      filteredContacts: filtered,
+      paginatedContacts: paginated,
+      totalPages: total
+    };
+  }, [contacts, activeConnectionFilter, currentPage]);
 
   return (
     <div className="min-h-screen bg-background">
