@@ -68,7 +68,6 @@ export class MemStorage implements IStorage {
       const areas = researchAreas[department];
       const researchArea = areas[Math.floor(Math.random() * areas.length)];
 
-      // Everyone has all contact methods
       return {
         name,
         kerberos,
@@ -91,41 +90,48 @@ export class MemStorage implements IStorage {
     mockContacts.forEach(contact => this.createContact(contact));
 
     // Now generate connections
-    // People are more likely to be connected to others in their department and year
+    // Keep track of all connections to ensure reciprocity
+    const allConnections = new Map<number, Set<number>>();
+
     this.contacts.forEach((contact) => {
-      const connections = new Set<number>();
-      const sameCluster = clusters.find(c => c.department === contact.department)?.members || new Set();
-
-      // Add 3-8 connections within same department (60% chance)
-      Array.from(sameCluster).forEach(otherId => {
-        if (otherId !== contact.id && Math.random() < 0.2 && connections.size < 8) {
-          connections.add(otherId);
-        }
-      });
-
-      // Then add 1-4 random connections from other departments
-      while (connections.size < 4 + Math.floor(Math.random() * 4)) {
-        const randomId = Math.floor(Math.random() * 200) + 1;
-        if (randomId !== contact.id && !sameCluster.has(randomId)) {
-          connections.add(randomId);
-        }
+      if (!allConnections.has(contact.id)) {
+        allConnections.set(contact.id, new Set());
       }
 
-      // Update the contact with connections
-      this.updateContact(contact.id, {
-        ...contact,
-        connections: Array.from(connections)
+      const sameCluster = clusters.find(c => c.department === contact.department)?.members || new Set();
+      const desiredConnections = 3 + Math.floor(Math.random() * 5); // 3-8 connections
+
+      // First try to add connections within the same department
+      Array.from(sameCluster).forEach(otherId => {
+        if (otherId !== contact.id && 
+            allConnections.get(contact.id)!.size < desiredConnections &&
+            (!allConnections.has(otherId) || allConnections.get(otherId)!.size < 8)) {
+          allConnections.get(contact.id)!.add(otherId);
+          if (!allConnections.has(otherId)) {
+            allConnections.set(otherId, new Set());
+          }
+          allConnections.get(otherId)!.add(contact.id);
+        }
       });
 
-      // Add reciprocal connections
-      connections.forEach(targetId => {
-        const targetContact = this.contacts.get(targetId);
-        if (targetContact && !targetContact.connections.includes(contact.id)) {
-          this.updateContact(targetId, {
-            ...targetContact,
-            connections: [...targetContact.connections, contact.id]
-          });
+      // If we still need more connections, add some from other departments
+      while (allConnections.get(contact.id)!.size < desiredConnections) {
+        const randomId = Math.floor(Math.random() * 200) + 1;
+        if (randomId !== contact.id && 
+            (!allConnections.has(randomId) || allConnections.get(randomId)!.size < 8)) {
+          allConnections.get(contact.id)!.add(randomId);
+          if (!allConnections.has(randomId)) {
+            allConnections.set(randomId, new Set());
+          }
+          allConnections.get(randomId)!.add(contact.id);
         }
+      }
+    });
+
+    // Update all contacts with their final connection lists
+    allConnections.forEach((connections, id) => {
+      this.updateContact(id, {
+        connections: Array.from(connections)
       });
     });
   }

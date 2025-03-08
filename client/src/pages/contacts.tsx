@@ -59,10 +59,12 @@ export default function Contacts() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Reset to page 1 when filters change
+  const totalPages = Math.ceil(filteredContacts.length / ITEMS_PER_PAGE);
+
+  // Only reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchParams, activeConnectionFilter]);
+  }, [searchParams, activeConnectionFilter]); // Dependencies that should trigger page reset
 
   useEffect(() => {
     const handleScroll = () => {
@@ -109,7 +111,7 @@ export default function Contacts() {
               isLoading={isLoading}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
-              totalPages={Math.ceil(filteredContacts.length / ITEMS_PER_PAGE)}
+              totalPages={totalPages}
               onFilterConnections={setActiveConnectionFilter}
               activeConnectionFilter={activeConnectionFilter}
             />
@@ -119,7 +121,6 @@ export default function Contacts() {
         <div className="h-screen" />
       </div>
 
-      {/* Network Visualization Overlay */}
       <div 
         ref={overlayRef}
         className="fixed inset-0 bg-black/95"
