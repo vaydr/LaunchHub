@@ -34,7 +34,7 @@ export default function Contacts() {
     }
   });
 
-  // Filter contacts if showing connections for a specific person
+  // Filter contacts based on active connection filter
   let displayContacts = contacts;
   if (activeConnectionFilter) {
     const activePerson = contacts.find(c => c.id === activeConnectionFilter);
@@ -45,13 +45,20 @@ export default function Contacts() {
     }
   }
 
-  // Paginate contacts
+  const totalPages = Math.ceil(displayContacts.length / ITEMS_PER_PAGE);
+
+  // Get current page's contacts
   const paginatedContacts = displayContacts.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  const totalPages = Math.ceil(displayContacts.length / ITEMS_PER_PAGE);
+  // Handle page changes
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    // Scroll to top of the table
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -90,8 +97,8 @@ export default function Contacts() {
               contacts={paginatedContacts}
               isLoading={isLoading}
               currentPage={currentPage}
-              onPageChange={setCurrentPage}
               totalPages={totalPages}
+              onPageChange={handlePageChange}
               onFilterConnections={setActiveConnectionFilter}
               activeConnectionFilter={activeConnectionFilter}
             />
