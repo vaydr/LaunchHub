@@ -34,7 +34,7 @@ export class MemStorage implements IStorage {
         },
         notes: "Working on distributed systems research",
         interactionStrength: 8,
-        connections: [2, 3, 11] // Connected with Alice, David, and Prof. Emma
+        connections: [2, 3, 4, 8, 11, 14] // Added more connections
       },
       {
         name: "Alice Johnson",
@@ -48,7 +48,7 @@ export class MemStorage implements IStorage {
         },
         notes: "UROP student in synthetic biology lab",
         interactionStrength: 5,
-        connections: [1, 7, 14] // Connected with John, Emily, and Olivia
+        connections: [1, 3, 7, 9, 14, 15] // Added more connections
       },
       {
         name: "David Chen",
@@ -63,7 +63,7 @@ export class MemStorage implements IStorage {
         },
         notes: "Active in IEEE student chapter",
         interactionStrength: 3,
-        connections: [1, 11] // Connected with John and Prof. Emma
+        connections: [1, 2, 8, 11, 12] // Added more connections
       },
       {
         name: "Maria Rodriguez",

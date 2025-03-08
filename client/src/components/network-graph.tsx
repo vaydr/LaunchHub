@@ -27,7 +27,12 @@ export default function NetworkGraph({ contacts }: NetworkGraphProps) {
       (contact.connections || []).map(targetId => ({
         from: contact.id,
         to: targetId,
-        color: { color: 'rgba(255, 255, 255, 0.2)' }
+        width: 2, // Thicker edges
+        color: { 
+          color: 'rgba(255, 255, 255, 0.3)',
+          highlight: '#fff',
+          hover: '#fff'
+        }
       }))
     ).filter(edge => 
       contacts.some(c => c.id === edge.from) && 
@@ -39,33 +44,48 @@ export default function NetworkGraph({ contacts }: NetworkGraphProps) {
     const options = {
       nodes: {
         shape: 'dot',
-        size: 16,
+        size: 20, // Larger nodes
         font: {
           color: '#ffffff',
-          size: 14,
+          size: 16, // Larger font
+          face: 'Inter'
         },
         borderWidth: 2,
-        shadow: true
-      },
-      edges: {
-        width: 1,
-        smooth: {
-          type: 'continuous'
+        shadow: true,
+        color: {
+          border: '#ffffff',
+          highlight: {
+            border: '#ffffff',
+            background: '#ffffff'
+          }
         }
       },
+      edges: {
+        width: 2,
+        selectionWidth: 3,
+        smooth: {
+          type: 'continuous',
+          roundness: 0.5
+        },
+        hoverWidth: 3
+      },
       physics: {
-        stabilization: false,
+        stabilization: {
+          enabled: true,
+          iterations: 100
+        },
         barnesHut: {
-          gravitationalConstant: -80000,
-          springConstant: 0.001,
-          springLength: 200
+          gravitationalConstant: -30000,
+          springConstant: 0.04,
+          springLength: 150
         }
       },
       interaction: {
         hover: true,
-        tooltipDelay: 200
-      },
-      background: 'transparent'
+        tooltipDelay: 200,
+        hideEdgesOnDrag: false,
+        zoomView: true
+      }
     };
 
     const network = new Network(containerRef.current, data, options);
@@ -101,6 +121,10 @@ export default function NetworkGraph({ contacts }: NetworkGraphProps) {
             {hoveredNode.notes && (
               <p className="text-sm text-gray-300 mt-2">{hoveredNode.notes}</p>
             )}
+            <div className="mt-2 text-sm text-gray-300">
+              <p>Interaction Strength: {hoveredNode.interactionStrength}</p>
+              <p>Connections: {hoveredNode.connections?.length || 0}</p>
+            </div>
           </CardContent>
         </Card>
       )}
