@@ -56,10 +56,6 @@ export default function ContactTable({
         <TableBody>
           {contacts && contacts.length > 0 ? contacts.map((contact) => {
             const isActive = activeConnectionFilter === contact.id;
-            // Get the actual Contact objects for connections
-            const connectionContacts = (contact.connections || [])
-              .map(id => contacts.find(c => c.id === id))
-              .filter((c): c is Contact => c !== undefined);
 
             return (
               <TableRow
@@ -92,10 +88,15 @@ export default function ContactTable({
                       <div className="space-y-1">
                         <h4 className="text-sm font-semibold">Connected to:</h4>
                         <div className="text-sm text-muted-foreground">
-                          {connectionContacts.length > 0 ? (
-                            connectionContacts.map((connection) => (
-                              <div key={connection.id} className="py-1">{connection.name}</div>
-                            ))
+                          {contact.connections && contact.connections.length > 0 ? (
+                            contact.connections.map(id => {
+                              const connectedContact = contacts.find(c => c.id === id);
+                              return connectedContact ? (
+                                <div key={id} className="py-1">
+                                  {connectedContact.name}
+                                </div>
+                              ) : null;
+                            })
                           ) : (
                             <div className="py-1">No connections</div>
                           )}
