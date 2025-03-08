@@ -55,9 +55,8 @@ export default function ContactTable({
         </TableHeader>
         <TableBody>
           {contacts.map((contact) => {
-            // Get all connected contacts
-            const connections = contact.connections;
-            const connectedNames = connections
+            // Get the names of all connected contacts
+            const connectionNames = contact.connections
               .map(id => contacts.find(c => c.id === id))
               .filter((c): c is Contact => c !== undefined)
               .map(c => c.name);
@@ -90,14 +89,14 @@ export default function ContactTable({
                             activeConnectionFilter === contact.id ? 'text-primary' : ''
                           }`}
                         />
-                        {connections.length}
+                        {connectionNames.length}
                       </Button>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-80">
                       <div className="space-y-1">
-                        <h4 className="text-sm font-semibold">Connected to {connectedNames.length} people:</h4>
+                        <h4 className="text-sm font-semibold">Connected to {connectionNames.length} people:</h4>
                         <div className="text-sm text-muted-foreground">
-                          {connectedNames.map((name, i) => (
+                          {connectionNames.map((name, i) => (
                             <div key={i} className="py-1">{name}</div>
                           ))}
                         </div>

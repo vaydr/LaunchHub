@@ -24,7 +24,7 @@ export class MemStorage implements IStorage {
     const roles = ['Undergraduate', 'Graduate Student', 'Professor', 'Research Scientist', 'Postdoc'];
     const years = [2024, 2025, 2026, 2027];
 
-    // First create all contacts
+    // First create all contacts without connections
     for (let i = 0; i < 200; i++) {
       const id = i + 1;
       const department = departments[Math.floor(Math.random() * departments.length)];
@@ -56,38 +56,57 @@ export class MemStorage implements IStorage {
       });
     }
 
-    // Now establish connections
-    const allIds = Array.from(this.contacts.keys());
+    // Create a map to store all connections before applying them
+    const connections = new Map<number, Set<number>>();
+    for (let i = 1; i <= 200; i++) {
+      connections.set(i, new Set());
+    }
 
-    allIds.forEach(id => {
-      const contact = this.contacts.get(id)!;
-
-      // Choose 5-8 random connections for each person
+    // Add 5-8 random connections for each contact
+    for (let i = 1; i <= 200; i++) {
       const numConnections = 5 + Math.floor(Math.random() * 4);
+      const contact = this.contacts.get(i)!;
 
-      // Shuffle all other IDs to get random connections
-      const possibleConnections = allIds
-        .filter(otherId => otherId !== id)
-        .sort(() => Math.random() - 0.5);
+      // Get potential connections (prefer same department)
+      const sameDept = Array.from(this.contacts.values())
+        .filter(c => c.id !== i && c.department === contact.department)
+        .map(c => c.id);
 
-      // Take the first numConnections IDs
-      const connections = possibleConnections.slice(0, numConnections);
+      const others = Array.from(this.contacts.values())
+        .filter(c => c.id !== i && c.department !== contact.department)
+        .map(c => c.id);
 
-      // Update this contact's connections
+      // Shuffle both arrays
+      sameDept.sort(() => Math.random() - 0.5);
+      others.sort(() => Math.random() - 0.5);
+
+      // Add connections, prioritizing same department
+      let added = 0;
+
+      // Add same department connections (try to add 60% from same dept)
+      const targetSameDept = Math.min(Math.floor(numConnections * 0.6), sameDept.length);
+      for (let j = 0; j < targetSameDept && added < numConnections; j++) {
+        const otherId = sameDept[j];
+        connections.get(i)!.add(otherId);
+        connections.get(otherId)!.add(i);
+        added++;
+      }
+
+      // Fill remaining with others
+      for (let j = 0; added < numConnections && j < others.length; j++) {
+        const otherId = others[j];
+        connections.get(i)!.add(otherId);
+        connections.get(otherId)!.add(i);
+        added++;
+      }
+    }
+
+    // Update all contacts with their connections
+    connections.forEach((connectionSet, id) => {
+      const contact = this.contacts.get(id)!;
       this.contacts.set(id, {
         ...contact,
-        connections
-      });
-
-      // Add reciprocal connections
-      connections.forEach(otherId => {
-        const otherContact = this.contacts.get(otherId)!;
-        if (!otherContact.connections.includes(id)) {
-          this.contacts.set(otherId, {
-            ...otherContact,
-            connections: [...otherContact.connections, id]
-          });
-        }
+        connections: Array.from(connectionSet)
       });
     });
   }
