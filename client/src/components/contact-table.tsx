@@ -21,6 +21,7 @@ interface ContactTableProps {
   contacts: Contact[];
   isLoading: boolean;
   currentPage: number;
+  totalPages: number;
   onPageChange: (page: number) => void;
   onFilterConnections: (connections: number[]) => void;
 }
@@ -29,6 +30,7 @@ export default function ContactTable({
   contacts,
   isLoading,
   currentPage,
+  totalPages,
   onPageChange,
   onFilterConnections
 }: ContactTableProps) {
@@ -57,7 +59,6 @@ export default function ContactTable({
             <TableHead>Department</TableHead>
             <TableHead>Year</TableHead>
             <TableHead>Connections</TableHead>
-            <TableHead>Interaction</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -66,7 +67,7 @@ export default function ContactTable({
               key={contact.id}
               className="cursor-pointer hover:bg-muted/50"
             >
-              <TableCell 
+              <TableCell
                 className="font-medium"
                 onClick={() => setLocation(`/contact/${contact.id}`)}
               >
@@ -78,8 +79,8 @@ export default function ContactTable({
               <TableCell>
                 <HoverCard>
                   <HoverCardTrigger asChild>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       className="font-mono"
                       onClick={() => {
@@ -107,13 +108,6 @@ export default function ContactTable({
                   </HoverCardContent>
                 </HoverCard>
               </TableCell>
-              <TableCell>
-                <Star
-                  className={`h-4 w-4 ${
-                    (contact.interactionStrength || 0) > 5 ? "fill-yellow-400" : ""
-                  }`}
-                />
-              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -127,10 +121,13 @@ export default function ContactTable({
         >
           Previous
         </Button>
+        <span className="flex items-center px-4">
+          Page {currentPage} of {totalPages}
+        </span>
         <Button
           variant="outline"
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={contacts.length < 10}
+          disabled={currentPage === totalPages}
         >
           Next
         </Button>

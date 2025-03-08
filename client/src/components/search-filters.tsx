@@ -20,16 +20,22 @@ const DEPARTMENTS = [
   "Mechanical Engineering",
 ];
 
-interface SearchFiltersProps {
-  onSearch: (params: Partial<SearchParams>) => void;
-}
-
 interface FilterTag {
   type: 'department' | 'year';
   value: string;
 }
 
-export default function SearchFilters({ onSearch }: SearchFiltersProps) {
+interface SearchFiltersProps {
+  onSearch: (params: Partial<SearchParams>) => void;
+  connectionFilter: number[];
+  onClearConnectionFilter: () => void;
+}
+
+export default function SearchFilters({ 
+  onSearch, 
+  connectionFilter, 
+  onClearConnectionFilter 
+}: SearchFiltersProps) {
   const [query, setQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<FilterTag[]>([]);
 
@@ -108,7 +114,7 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
       </div>
 
       {/* Filter Tags */}
-      {selectedFilters.length > 0 && (
+      {(selectedFilters.length > 0 || connectionFilter.length > 0) && (
         <div className="flex flex-wrap gap-2">
           {selectedFilters.map((filter, index) => (
             <div
@@ -126,6 +132,20 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
               </Button>
             </div>
           ))}
+
+          {connectionFilter.length > 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-sm">
+              <span>Showing Connections ({connectionFilter.length})</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 rounded-full hover:bg-primary/20"
+                onClick={onClearConnectionFilter}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

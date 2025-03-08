@@ -158,11 +158,11 @@ export class MemStorage implements IStorage {
       );
     }
 
-    const limit = params.limit || 10;
-    const page = params.page || 1;
-    const start = (page - 1) * limit;
+    // Sort by name for consistent ordering
+    results.sort((a, b) => a.name.localeCompare(b.name));
 
-    return results.slice(start, start + limit);
+    // Return all results for client-side pagination
+    return results;
   }
 
   async createContact(contact: InsertContact): Promise<Contact> {

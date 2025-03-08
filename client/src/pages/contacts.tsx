@@ -17,6 +17,8 @@ export default function Contacts() {
     limit: 10
   });
   const [connectionFilter, setConnectionFilter] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const { data: contacts, isLoading } = useQuery({
     queryKey: ['/api/contacts', searchParams],
@@ -35,17 +37,21 @@ export default function Contacts() {
         );
       }
 
-      params.append('page', searchParams.page?.toString() || '1');
-      params.append('limit', searchParams.limit?.toString() || '10');
-
       return fetch(`/api/contacts?${params}`).then(res => res.json());
     }
   });
 
   // Filter contacts based on connections if connectionFilter is active
-  const filteredContacts = contacts && connectionFilter.length > 0
-    ? contacts.filter(contact => connectionFilter.includes(contact.id))
-    : contacts;
+  let filteredContacts = contacts;
+  if (connectionFilter.length > 0) {
+    filteredContacts = contacts?.filter(contact => connectionFilter.includes(contact.id));
+  }
+
+  // Paginate the filtered contacts
+  const paginatedContacts = filteredContacts?.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,34 +86,29 @@ export default function Contacts() {
             <CardTitle className="text-2xl font-bold flex items-center gap-2">
               <Search className="h-6 w-6 text-primary" />
               Directory Search
-              {connectionFilter.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setConnectionFilter([])}
-                  className="ml-auto text-sm"
-                >
-                  Clear Connection Filter
-                </Button>
-              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <SearchFilters
-              onSearch={(params) => setSearchParams(prev => ({ ...prev, ...params, page: 1 }))}
+              onSearch={(params) => {
+                setSearchParams(prev => ({ ...prev, ...params }));
+                setCurrentPage(1); // Reset page when filters change
+              }}
+              connectionFilter={connectionFilter}
+              onClearConnectionFilter={() => setConnectionFilter([])}
             />
             <ContactTable
-              contacts={filteredContacts || []}
+              contacts={paginatedContacts || []}
               isLoading={isLoading}
-              onPageChange={(page) => setSearchParams(prev => ({ ...prev, page }))}
-              currentPage={searchParams.page || 1}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+              totalPages={Math.ceil((filteredContacts?.length || 0) / ITEMS_PER_PAGE)}
               onFilterConnections={setConnectionFilter}
             />
           </CardContent>
         </Card>
 
-        {/* Add spacing to ensure content doesn't get hidden behind overlay */}
-        <div className="h-screen" /> 
+        <div className="h-screen" />
       </div>
 
       {/* Network Visualization Overlay */}
