@@ -24,7 +24,7 @@ export class MemStorage implements IStorage {
     const roles = ['Undergraduate', 'Graduate Student', 'Professor', 'Research Scientist', 'Postdoc'];
     const years = [2024, 2025, 2026, 2027];
 
-    // First create all contacts without connections
+    // First create all contacts without any connections
     for (let i = 0; i < 200; i++) {
       const id = i + 1;
       const department = departments[Math.floor(Math.random() * departments.length)];
@@ -56,58 +56,56 @@ export class MemStorage implements IStorage {
       });
     }
 
-    // Create a map to store all connections before applying them
-    const connections = new Map<number, Set<number>>();
-    for (let i = 1; i <= 200; i++) {
-      connections.set(i, new Set());
-    }
+    // Now add connections, ensuring they are bidirectional
+    const addConnection = (id1: number, id2: number) => {
+      const contact1 = this.contacts.get(id1)!;
+      const contact2 = this.contacts.get(id2)!;
 
-    // Add 5-8 random connections for each contact
-    for (let i = 1; i <= 200; i++) {
-      const numConnections = 5 + Math.floor(Math.random() * 4);
-      const contact = this.contacts.get(i)!;
-
-      // Get potential connections (prefer same department)
-      const sameDept = Array.from(this.contacts.values())
-        .filter(c => c.id !== i && c.department === contact.department)
-        .map(c => c.id);
-
-      const others = Array.from(this.contacts.values())
-        .filter(c => c.id !== i && c.department !== contact.department)
-        .map(c => c.id);
-
-      // Shuffle both arrays
-      sameDept.sort(() => Math.random() - 0.5);
-      others.sort(() => Math.random() - 0.5);
-
-      // Add connections, prioritizing same department
-      let added = 0;
-
-      // Add same department connections (try to add 60% from same dept)
-      const targetSameDept = Math.min(Math.floor(numConnections * 0.6), sameDept.length);
-      for (let j = 0; j < targetSameDept && added < numConnections; j++) {
-        const otherId = sameDept[j];
-        connections.get(i)!.add(otherId);
-        connections.get(otherId)!.add(i);
-        added++;
+      // Add bidirectional connection
+      if (!contact1.connections.includes(id2)) {
+        contact1.connections.push(id2);
+        this.contacts.set(id1, contact1);
       }
-
-      // Fill remaining with others
-      for (let j = 0; added < numConnections && j < others.length; j++) {
-        const otherId = others[j];
-        connections.get(i)!.add(otherId);
-        connections.get(otherId)!.add(i);
-        added++;
+      if (!contact2.connections.includes(id1)) {
+        contact2.connections.push(id1);
+        this.contacts.set(id2, contact2);
       }
-    }
+    };
 
-    // Update all contacts with their connections
-    connections.forEach((connectionSet, id) => {
+    // For each contact, add 5-8 connections
+    Array.from(this.contacts.keys()).forEach(id => {
       const contact = this.contacts.get(id)!;
-      this.contacts.set(id, {
-        ...contact,
-        connections: Array.from(connectionSet)
-      });
+      const numConnections = 5 + Math.floor(Math.random() * 4); // 5-8 connections
+
+      // Get potential connections from same department
+      const sameDept = Array.from(this.contacts.values())
+        .filter(c => c.id !== id && c.department === contact.department)
+        .map(c => c.id);
+
+      // Get potential connections from other departments
+      const otherDept = Array.from(this.contacts.values())
+        .filter(c => c.id !== id && c.department !== contact.department)
+        .map(c => c.id);
+
+      // Try to add ~60% connections from same department
+      const sameDeptCount = Math.min(Math.ceil(numConnections * 0.6), sameDept.length);
+      const shuffledSameDept = [...sameDept].sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < sameDeptCount; i++) {
+        if (i < shuffledSameDept.length) {
+          addConnection(id, shuffledSameDept[i]);
+        }
+      }
+
+      // Fill remaining connections from other departments
+      const remainingConnections = numConnections - sameDeptCount;
+      const shuffledOtherDept = [...otherDept].sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < remainingConnections; i++) {
+        if (i < shuffledOtherDept.length) {
+          addConnection(id, shuffledOtherDept[i]);
+        }
+      }
     });
   }
 

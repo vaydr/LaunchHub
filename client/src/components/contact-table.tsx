@@ -38,7 +38,7 @@ export default function ContactTable({
   const [_, setLocation] = useLocation();
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading contacts...</div>;
   }
 
   return (
@@ -55,11 +55,10 @@ export default function ContactTable({
         </TableHeader>
         <TableBody>
           {contacts.map((contact) => {
-            // Get the names of all connected contacts
-            const connectionNames = contact.connections
+            // Get all connected contacts
+            const connectedContacts = contact.connections
               .map(id => contacts.find(c => c.id === id))
-              .filter((c): c is Contact => c !== undefined)
-              .map(c => c.name);
+              .filter((c): c is Contact => c !== undefined);
 
             return (
               <TableRow
@@ -89,15 +88,17 @@ export default function ContactTable({
                             activeConnectionFilter === contact.id ? 'text-primary' : ''
                           }`}
                         />
-                        {connectionNames.length}
+                        {connectedContacts.length}
                       </Button>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-80">
                       <div className="space-y-1">
-                        <h4 className="text-sm font-semibold">Connected to {connectionNames.length} people:</h4>
+                        <h4 className="text-sm font-semibold">Connected to {connectedContacts.length} people:</h4>
                         <div className="text-sm text-muted-foreground">
-                          {connectionNames.map((name, i) => (
-                            <div key={i} className="py-1">{name}</div>
+                          {connectedContacts.map(connection => (
+                            <div key={connection.id} className="py-1">
+                              {connection.name}
+                            </div>
                           ))}
                         </div>
                       </div>
