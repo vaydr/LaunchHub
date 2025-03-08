@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Contact } from "@shared/schema";
 
 interface ContactTableProps {
@@ -16,13 +17,15 @@ interface ContactTableProps {
   isLoading: boolean;
   currentPage: number;
   onPageChange: (page: number) => void;
+  onFilterByConnection: (contactId: number) => void;
 }
 
 export default function ContactTable({
   contacts,
   isLoading,
   currentPage,
-  onPageChange
+  onPageChange,
+  onFilterByConnection
 }: ContactTableProps) {
   const [_, setLocation] = useLocation();
 
@@ -40,6 +43,7 @@ export default function ContactTable({
             <TableHead>Department</TableHead>
             <TableHead>Year</TableHead>
             <TableHead>Interaction</TableHead>
+            <TableHead>Connections</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -59,6 +63,41 @@ export default function ContactTable({
                     (contact.interactionStrength || 0) > 5 ? "fill-yellow-400" : ""
                   }`}
                 />
+              </TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="hover:bg-primary/20"
+                    >
+                      {contact.connections?.length || 0}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Connected With:</h4>
+                      <div className="space-y-1">
+                        {contacts
+                          .filter(c => contact.connections?.includes(c.id))
+                          .map(connection => (
+                            <div key={connection.id} className="flex justify-between items-center">
+                              <span>{connection.name}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onFilterByConnection(contact.id)}
+                              >
+                                Filter by
+                              </Button>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </TableCell>
             </TableRow>
           ))}

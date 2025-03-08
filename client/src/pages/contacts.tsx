@@ -12,6 +12,7 @@ import type { SearchParams } from "@shared/schema";
 export default function Contacts() {
   const [_, setLocation] = useLocation();
   const overlayRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useState<SearchParams>({
     page: 1,
     limit: 10
@@ -23,7 +24,6 @@ export default function Contacts() {
       const params = new URLSearchParams();
       if (searchParams.query) params.append('query', searchParams.query);
 
-      // Handle array parameters
       if (searchParams.departments) {
         searchParams.departments.forEach(dept => 
           params.append('departments', dept)
@@ -33,6 +33,9 @@ export default function Contacts() {
         searchParams.years.forEach(year => 
           params.append('years', year.toString())
         );
+      }
+      if (searchParams.connectedTo) {
+        params.append('connectedTo', searchParams.connectedTo.toString());
       }
 
       params.append('page', searchParams.page?.toString() || '1');
@@ -44,10 +47,10 @@ export default function Contacts() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (overlayRef.current) {
-        const scrolled = window.scrollY;
+      if (overlayRef.current && tableRef.current) {
+        const tableBottom = tableRef.current.getBoundingClientRect().bottom;
         const viewportHeight = window.innerHeight;
-        const translateY = Math.max(0, viewportHeight - scrolled);
+        const translateY = Math.max(0, tableBottom - viewportHeight);
         overlayRef.current.style.transform = `translateY(${translateY}px)`;
       }
     };
@@ -56,9 +59,17 @@ export default function Contacts() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleFilterByConnection = (contactId: number) => {
+    setSearchParams(prev => ({
+      ...prev,
+      page: 1,
+      connectedTo: prev.connectedTo === contactId ? undefined : contactId
+    }));
+  };
+
   return (
     <div className="min-h-[200vh] bg-background">
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-8 px-4" ref={tableRef}>
         <Button 
           variant="ghost" 
           className="mb-4"
@@ -84,6 +95,7 @@ export default function Contacts() {
               isLoading={isLoading}
               onPageChange={(page) => setSearchParams(prev => ({ ...prev, page }))}
               currentPage={searchParams.page || 1}
+              onFilterByConnection={handleFilterByConnection}
             />
           </CardContent>
         </Card>
