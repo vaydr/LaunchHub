@@ -54,8 +54,13 @@ export default function ContactTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {contacts && contacts.length > 0 ? contacts.map((contact) => {
+          {contacts.length > 0 ? contacts.map((contact) => {
             const isActive = activeConnectionFilter === contact.id;
+
+            // Get all connected contacts
+            const connectionsList = (contact.connections || [])
+              .map(id => contacts.find(c => c.id === id))
+              .filter((c): c is Contact => c !== undefined);
 
             return (
               <TableRow
@@ -81,25 +86,18 @@ export default function ContactTable({
                         onClick={() => onFilterConnections(contact.id)}
                       >
                         <Share2 className={`h-4 w-4 mr-2 ${isActive ? 'text-primary' : ''}`} />
-                        {contact.connections?.length || 0}
+                        {connectionsList.length}
                       </Button>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-80">
                       <div className="space-y-1">
                         <h4 className="text-sm font-semibold">Connected to:</h4>
                         <div className="text-sm text-muted-foreground">
-                          {contact.connections && contact.connections.length > 0 ? (
-                            contact.connections.map(id => {
-                              const connectedContact = contacts.find(c => c.id === id);
-                              return connectedContact ? (
-                                <div key={id} className="py-1">
-                                  {connectedContact.name}
-                                </div>
-                              ) : null;
-                            })
-                          ) : (
-                            <div className="py-1">No connections</div>
-                          )}
+                          {connectionsList.map(connection => (
+                            <div key={connection.id} className="py-1">
+                              {connection.name}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </HoverCardContent>
