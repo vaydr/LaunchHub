@@ -36,7 +36,84 @@ export default function ContactTable({
 }: ContactTableProps) {
   const [_, setLocation] = useLocation();
   const [expandedConnections, setExpandedConnections] = useState<number[]>([]);
+  
+  // Component to fetch and display connection names
+  const ConnectionNames = ({ connectionIds }: { connectionIds: number[] }) => {
+    const [names, setNames] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+    
+    useEffect(() => {
+      const fetchContactNames = async () => {
+        setLoading(true);
+        try {
+          const namePromises = connectionIds.map(async (id) => {
+            // First check if the contact is in our current list
+            const contactInList = contacts.find(c => c.id === id);
+            if (contactInList) {
+              return contactInList.name;
+            }
+            
+            // If not found, fetch it
+            try {
+              const response = await fetch(`/api/contacts/${id}`);
+              const contact = await response.json();
+              return contact.name;
+            } catch (error) {
+              console.error(`Failed to fetch contact #${id}`, error);
+              return `Contact #${id}`;
+            }
+          });
+          
+          const resolvedNames = await Promise.all(namePromises);
+          setNames(resolvedNames);
+        } catch (error) {
+          console.error("Error fetching contact names:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchContactNames();
+    }, [connectionIds]);
+    
+    if (loading) {
+      return <div className="py-1">Loading connections...</div>;
+    }
+    
+    return (
+      <>
+        {names.map((name, i) => (
+          <div key={i} className="py-1">{name}</div>
+        ))}
+      </>
+    );
+  };
 
+  // Get names for a list of connection IDs
+  const getConnectionNames = (connectionIds: number[]) => {
+    // Use a Promise to fetch any contacts that aren't in the current contacts list
+    return Promise.all(
+      connectionIds.map(async (id) => {
+        // First check if the contact is in our current list
+        const contactInList = contacts.find(c => c.id === id);
+        if (contactInList) {
+          return contactInList.name;
+        }
+        
+        // If not found in current list, fetch it from the API
+        try {
+          const response = await fetch(`/api/contacts/${id}`);
+          const contact = await response.json();
+          return contact.name;
+        } catch (error) {
+          console.error(`Failed to fetch contact #${id}`, error);
+          return `Contact #${id}`;
+        }
+      })
+    );
+  };
+</old_str>
+<new_str>
   // Get names for a list of connection IDs
   const getConnectionNames = (connectionIds: number[]) => {
     // Look through all contacts, not just the currently displayed ones
@@ -103,9 +180,11 @@ export default function ContactTable({
                     <div className="space-y-1">
                       <h4 className="text-sm font-semibold">Connected to:</h4>
                       <div className="text-sm text-muted-foreground">
-                        {getConnectionNames(contact.connections || []).map((name, i) => (
-                          <div key={i} className="py-1">{name}</div>
-                        ))}
+                        {contact.connections && contact.connections.length > 0 ? (
+                          <ConnectionNames connectionIds={contact.connections} />
+                        ) : (
+                          <div className="py-1">No connections</div>
+                        )}
                       </div>
                     </div>
                   </HoverCardContent>
