@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Share2, Star } from "lucide-react";
+import { Share2 } from "lucide-react";
 import {
   HoverCard,
   HoverCardContent,
@@ -36,94 +36,6 @@ export default function ContactTable({
 }: ContactTableProps) {
   const [_, setLocation] = useLocation();
   const [expandedConnections, setExpandedConnections] = useState<number[]>([]);
-  
-  // Component to fetch and display connection names
-  const ConnectionNames = ({ connectionIds }: { connectionIds: number[] }) => {
-    const [names, setNames] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    
-    useEffect(() => {
-      const fetchContactNames = async () => {
-        setLoading(true);
-        try {
-          const namePromises = connectionIds.map(async (id) => {
-            // First check if the contact is in our current list
-            const contactInList = contacts.find(c => c.id === id);
-            if (contactInList) {
-              return contactInList.name;
-            }
-            
-            // If not found, fetch it
-            try {
-              const response = await fetch(`/api/contacts/${id}`);
-              const contact = await response.json();
-              return contact.name;
-            } catch (error) {
-              console.error(`Failed to fetch contact #${id}`, error);
-              return `Contact #${id}`;
-            }
-          });
-          
-          const resolvedNames = await Promise.all(namePromises);
-          setNames(resolvedNames);
-        } catch (error) {
-          console.error("Error fetching contact names:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      fetchContactNames();
-    }, [connectionIds]);
-    
-    if (loading) {
-      return <div className="py-1">Loading connections...</div>;
-    }
-    
-    return (
-      <>
-        {names.map((name, i) => (
-          <div key={i} className="py-1">{name}</div>
-        ))}
-      </>
-    );
-  };
-
-  // Get names for a list of connection IDs
-  const getConnectionNames = (connectionIds: number[]) => {
-    // Use a Promise to fetch any contacts that aren't in the current contacts list
-    return Promise.all(
-      connectionIds.map(async (id) => {
-        // First check if the contact is in our current list
-        const contactInList = contacts.find(c => c.id === id);
-        if (contactInList) {
-          return contactInList.name;
-        }
-        
-        // If not found in current list, fetch it from the API
-        try {
-          const response = await fetch(`/api/contacts/${id}`);
-          const contact = await response.json();
-          return contact.name;
-        } catch (error) {
-          console.error(`Failed to fetch contact #${id}`, error);
-          return `Contact #${id}`;
-        }
-      })
-    );
-  };
-</old_str>
-<new_str>
-  // Get names for a list of connection IDs
-  const getConnectionNames = (connectionIds: number[]) => {
-    // Look through all contacts, not just the currently displayed ones
-    const allContacts = contacts.length > 0 ? contacts : [];
-    return connectionIds
-      .map(id => {
-        const contact = allContacts.find(c => c.id === id);
-        return contact ? contact.name : `Contact #${id}`;
-      });
-  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -181,7 +93,12 @@ export default function ContactTable({
                       <h4 className="text-sm font-semibold">Connected to:</h4>
                       <div className="text-sm text-muted-foreground">
                         {contact.connections && contact.connections.length > 0 ? (
-                          <ConnectionNames connectionIds={contact.connections} />
+                          contact.connections.map((id) => {
+                            const connected = contacts.find(c => c.id === id);
+                            return connected ? (
+                              <div key={id} className="py-1">{connected.name}</div>
+                            ) : null;
+                          })
                         ) : (
                           <div className="py-1">No connections</div>
                         )}
@@ -198,7 +115,7 @@ export default function ContactTable({
           )}
         </TableBody>
       </Table>
-      
+
       {totalPages > 1 && (
         <div className="flex items-center justify-center space-x-2 mt-4">
           <Button
@@ -222,26 +139,6 @@ export default function ContactTable({
           </Button>
         </div>
       )}
-
-      <div className="flex justify-center gap-2 mt-4">
-        <Button
-          variant="outline"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </Button>
-        <span className="flex items-center px-4">
-          Page {currentPage} of {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </Button>
-      </div>
     </div>
   );
 }
