@@ -84,7 +84,7 @@ export default function ContactTable({
       </Table>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center space-x-2 mt-4">
+        <div className="flex justify-center gap-4 mt-4">
           <Button
             variant="outline"
             size="sm"
@@ -93,8 +93,8 @@ export default function ContactTable({
           >
             Previous
           </Button>
-          <span className="flex items-center px-4">
-            Page {currentPage} of {totalPages}
+          <span>
+            {currentPage} / {totalPages}
           </span>
           <Button
             variant="outline"

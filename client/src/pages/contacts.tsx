@@ -8,6 +8,8 @@ import ContactTable from "@/components/contact-table";
 import SearchFilters from "@/components/search-filters";
 import type { SearchParams } from "@shared/schema";
 
+const ITEMS_PER_PAGE = 10;
+
 export default function Contacts() {
   const [_, setLocation] = useLocation();
   const [searchParams, setSearchParams] = useState<SearchParams>({
@@ -17,7 +19,6 @@ export default function Contacts() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [activeConnectionFilter, setActiveConnectionFilter] = useState<number | null>(null);
-  const ITEMS_PER_PAGE = 10;
 
   const { data: contacts = [], isLoading } = useQuery({
     queryKey: ['/api/contacts', searchParams],
@@ -34,7 +35,7 @@ export default function Contacts() {
     }
   });
 
-  // Filter contacts based on active connection filter
+  // Filter contacts based on connection if active
   let displayContacts = contacts;
   if (activeConnectionFilter) {
     const activePerson = contacts.find(c => c.id === activeConnectionFilter);
@@ -52,13 +53,6 @@ export default function Contacts() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-
-  // Handle page changes
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    // Scroll to top of the table
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -98,7 +92,7 @@ export default function Contacts() {
               isLoading={isLoading}
               currentPage={currentPage}
               totalPages={totalPages}
-              onPageChange={handlePageChange}
+              onPageChange={setCurrentPage}
               onFilterConnections={setActiveConnectionFilter}
               activeConnectionFilter={activeConnectionFilter}
             />
