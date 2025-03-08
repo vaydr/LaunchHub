@@ -18,7 +18,7 @@ export default function Contacts() {
     years: []
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [connectionFilter, setConnectionFilter] = useState<number[]>([]);
+  const [activeConnectionFilter, setActiveConnectionFilter] = useState<number | null>(null);
   const ITEMS_PER_PAGE = 10;
 
   const { data: contacts = [], isLoading } = useQuery({
@@ -32,6 +32,7 @@ export default function Contacts() {
           params.append('departments', dept)
         );
       }
+
       if (searchParams.years) {
         searchParams.years.forEach(year => 
           params.append('years', year.toString())
@@ -42,16 +43,14 @@ export default function Contacts() {
     }
   });
 
-  // Create a mapping of contact IDs to names for the connection filters
-  const contactNames = contacts.reduce((acc: Record<number, string>, contact: Contact) => {
-    acc[contact.id] = contact.name;
-    return acc;
-  }, {});
-
-  // Filter contacts based on connections if connectionFilter is active
+  // Filter contacts based on connections if activeConnectionFilter is set
   let filteredContacts = contacts;
-  if (connectionFilter.length > 0) {
-    filteredContacts = contacts.filter(contact => connectionFilter.includes(contact.id));
+  const activePerson = activeConnectionFilter ? contacts.find(c => c.id === activeConnectionFilter) : null;
+
+  if (activePerson && activePerson.connections) {
+    filteredContacts = contacts.filter(contact => 
+      activePerson.connections?.includes(contact.id)
+    );
   }
 
   // Paginate the filtered contacts
@@ -63,7 +62,7 @@ export default function Contacts() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchParams, connectionFilter]);
+  }, [searchParams, activeConnectionFilter]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -102,9 +101,8 @@ export default function Contacts() {
           <CardContent>
             <SearchFilters
               onSearch={setSearchParams}
-              connectionFilter={connectionFilter}
-              onClearConnectionFilter={() => setConnectionFilter([])}
-              contactNames={contactNames}
+              connectionPerson={activePerson ? { id: activePerson.id, name: activePerson.name } : null}
+              onClearConnectionFilter={() => setActiveConnectionFilter(null)}
             />
             <ContactTable
               contacts={paginatedContacts}
@@ -112,7 +110,8 @@ export default function Contacts() {
               currentPage={currentPage}
               onPageChange={setCurrentPage}
               totalPages={Math.ceil(filteredContacts.length / ITEMS_PER_PAGE)}
-              onFilterConnections={setConnectionFilter}
+              onFilterConnections={setActiveConnectionFilter}
+              activeConnectionFilter={activeConnectionFilter}
             />
           </CardContent>
         </Card>

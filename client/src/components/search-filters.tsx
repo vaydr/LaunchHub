@@ -28,16 +28,14 @@ interface FilterTag {
 
 interface SearchFiltersProps {
   onSearch: (params: Partial<SearchParams>) => void;
-  connectionFilter: number[];
+  connectionPerson: { id: number; name: string } | null;
   onClearConnectionFilter: () => void;
-  contactNames?: Record<number, string>;
 }
 
 export default function SearchFilters({ 
   onSearch, 
-  connectionFilter, 
-  onClearConnectionFilter,
-  contactNames = {}
+  connectionPerson,
+  onClearConnectionFilter
 }: SearchFiltersProps) {
   const [query, setQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<FilterTag[]>([]);
@@ -60,26 +58,23 @@ export default function SearchFilters({
     });
   }, [query, selectedFilters, onSearch]);
 
-  // Add connection filter when it changes
+  // Update filters when connection person changes
   useEffect(() => {
-    if (connectionFilter.length > 0) {
-      const connectionNames = connectionFilter.map(id => contactNames[id] || `Contact ${id}`).join(", ");
+    if (connectionPerson) {
       setSelectedFilters(prev => {
-        // Remove any existing connection filters
         const withoutConnections = prev.filter(f => f.type !== 'connection');
         return [...withoutConnections, {
           type: 'connection',
-          value: 'connections',
-          label: `Connected to: ${connectionNames}`
+          value: connectionPerson.id.toString(),
+          label: `Connected to: ${connectionPerson.name}`
         }];
       });
     } else {
       setSelectedFilters(prev => prev.filter(f => f.type !== 'connection'));
     }
-  }, [connectionFilter, contactNames]);
+  }, [connectionPerson]);
 
   const handleAddFilter = (type: 'department' | 'year', value: string) => {
-    // Don't add if already exists
     if (!selectedFilters.some(f => f.type === type && f.value === value)) {
       setSelectedFilters(prev => [...prev, { type, value }]);
     }
@@ -146,9 +141,7 @@ export default function SearchFilters({
               key={`${filter.type}-${filter.value}-${index}`}
               className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-sm"
             >
-              <span className="capitalize">
-                {filter.label || `${filter.type}: ${filter.value}`}
-              </span>
+              <span>{filter.label || `${filter.type}: ${filter.value}`}</span>
               <Button
                 variant="ghost"
                 size="icon"

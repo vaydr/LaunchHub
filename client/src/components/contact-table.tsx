@@ -23,7 +23,8 @@ interface ContactTableProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  onFilterConnections: (connections: number[]) => void;
+  onFilterConnections: (id: number) => void;
+  activeConnectionFilter: number | null;
 }
 
 export default function ContactTable({
@@ -32,10 +33,18 @@ export default function ContactTable({
   currentPage,
   totalPages,
   onPageChange,
-  onFilterConnections
+  onFilterConnections,
+  activeConnectionFilter
 }: ContactTableProps) {
   const [_, setLocation] = useLocation();
-  const [expandedConnections, setExpandedConnections] = useState<number[]>([]);
+
+  // Find all names for the connections of a contact
+  const getConnectionNames = (contact: Contact) => {
+    return (contact.connections || [])
+      .map(id => contacts.find(c => c.id === id))
+      .filter((c): c is Contact => c !== undefined)
+      .map(c => c.name);
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -54,61 +63,56 @@ export default function ContactTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {contacts && contacts.length > 0 ? contacts.map((contact) => (
-            <TableRow
-              key={contact.id}
-              className="cursor-pointer hover:bg-muted/50"
-            >
-              <TableCell
-                className="font-medium"
-                onClick={() => setLocation(`/contact/${contact.id}`)}
+          {contacts && contacts.length > 0 ? contacts.map((contact) => {
+            const connectionNames = getConnectionNames(contact);
+            const isActive = activeConnectionFilter === contact.id;
+
+            return (
+              <TableRow
+                key={contact.id}
+                className="cursor-pointer hover:bg-muted/50"
               >
-                {contact.name}
-              </TableCell>
-              <TableCell>{contact.kerberos}</TableCell>
-              <TableCell>{contact.department}</TableCell>
-              <TableCell>{contact.year}</TableCell>
-              <TableCell>
-                <HoverCard>
-                  <HoverCardTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="font-mono"
-                      onClick={() => {
-                        if (expandedConnections.includes(contact.id)) {
-                          setExpandedConnections(prev => prev.filter(id => id !== contact.id));
-                        } else {
-                          setExpandedConnections(prev => [...prev, contact.id]);
-                          onFilterConnections(contact.connections || []);
-                        }
-                      }}
-                    >
-                      <Share2 className={`h-4 w-4 mr-2 ${expandedConnections.includes(contact.id) ? 'text-primary' : ''}`} />
-                      {contact.connections?.length || 0}
-                    </Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="w-80">
-                    <div className="space-y-1">
-                      <h4 className="text-sm font-semibold">Connected to:</h4>
-                      <div className="text-sm text-muted-foreground">
-                        {contact.connections && contact.connections.length > 0 ? (
-                          contact.connections.map((id) => {
-                            const connected = contacts.find(c => c.id === id);
-                            return connected ? (
-                              <div key={id} className="py-1">{connected.name}</div>
-                            ) : null;
-                          })
-                        ) : (
-                          <div className="py-1">No connections</div>
-                        )}
+                <TableCell
+                  className="font-medium"
+                  onClick={() => setLocation(`/contact/${contact.id}`)}
+                >
+                  {contact.name}
+                </TableCell>
+                <TableCell>{contact.kerberos}</TableCell>
+                <TableCell>{contact.department}</TableCell>
+                <TableCell>{contact.year}</TableCell>
+                <TableCell>
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="font-mono"
+                        onClick={() => onFilterConnections(contact.id)}
+                      >
+                        <Share2 className={`h-4 w-4 mr-2 ${isActive ? 'text-primary' : ''}`} />
+                        {connectionNames.length}
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-80">
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-semibold">Connected to:</h4>
+                        <div className="text-sm text-muted-foreground">
+                          {connectionNames.length > 0 ? (
+                            connectionNames.map((name, i) => (
+                              <div key={i} className="py-1">{name}</div>
+                            ))
+                          ) : (
+                            <div className="py-1">No connections</div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              </TableCell>
-            </TableRow>
-          )) : (
+                    </HoverCardContent>
+                  </HoverCard>
+                </TableCell>
+              </TableRow>
+            );
+          }) : (
             <TableRow>
               <TableCell colSpan={5} className="text-center py-4">No contacts found</TableCell>
             </TableRow>
