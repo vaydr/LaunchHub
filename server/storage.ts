@@ -96,20 +96,17 @@ export class MemStorage implements IStorage {
       const connections = new Set<number>();
       const sameCluster = clusters.find(c => c.department === contact.department)?.members || new Set();
 
-      // Add 15-25 connections
-      const targetConnections = 15 + Math.floor(Math.random() * 10);
-
-      // First add connections within same department (60% chance)
+      // Add 3-8 connections within same department (60% chance)
       Array.from(sameCluster).forEach(otherId => {
-        if (otherId !== contact.id && Math.random() < 0.6) {
+        if (otherId !== contact.id && Math.random() < 0.2 && connections.size < 8) {
           connections.add(otherId);
         }
       });
 
-      // Then add random connections until we reach target
-      while (connections.size < targetConnections) {
+      // Then add 1-4 random connections from other departments
+      while (connections.size < 4 + Math.floor(Math.random() * 4)) {
         const randomId = Math.floor(Math.random() * 200) + 1;
-        if (randomId !== contact.id) {
+        if (randomId !== contact.id && !sameCluster.has(randomId)) {
           connections.add(randomId);
         }
       }
@@ -118,6 +115,17 @@ export class MemStorage implements IStorage {
       this.updateContact(contact.id, {
         ...contact,
         connections: Array.from(connections)
+      });
+
+      // Add reciprocal connections
+      connections.forEach(targetId => {
+        const targetContact = this.contacts.get(targetId);
+        if (targetContact && !targetContact.connections.includes(contact.id)) {
+          this.updateContact(targetId, {
+            ...targetContact,
+            connections: [...targetContact.connections, contact.id]
+          });
+        }
       });
     });
   }
@@ -171,7 +179,8 @@ export class MemStorage implements IStorage {
     const newContact: Contact = {
       ...contact,
       id,
-      lastInteraction: now
+      lastInteraction: now,
+      connections: []
     };
     this.contacts.set(id, newContact);
     return newContact;
