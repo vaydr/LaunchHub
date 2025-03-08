@@ -35,26 +35,30 @@ export default function Contacts() {
     }
   });
 
-  // Filter contacts based on connection if active
-  let displayContacts = contacts;
-  if (activeConnectionFilter) {
-    const activePerson = contacts.find(c => c.id === activeConnectionFilter);
-    if (activePerson) {
-      displayContacts = contacts.filter(contact => 
-        activePerson.connections.includes(contact.id)
-      );
-    }
+  // First, apply connection filter if active
+  const filteredContacts = activeConnectionFilter
+    ? contacts.filter(contact => {
+        const activePerson = contacts.find(c => c.id === activeConnectionFilter);
+        return activePerson?.connections.includes(contact.id);
+      })
+    : contacts;
+
+  // Then calculate pagination
+  const totalPages = Math.ceil(filteredContacts.length / ITEMS_PER_PAGE);
+
+  // Ensure current page is valid
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+  if (validPage !== currentPage) {
+    setCurrentPage(validPage);
   }
 
-  const totalPages = Math.ceil(displayContacts.length / ITEMS_PER_PAGE);
-
-  // Get current page's contacts
-  const paginatedContacts = displayContacts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+  // Get paginated contacts
+  const paginatedContacts = filteredContacts.slice(
+    (validPage - 1) * ITEMS_PER_PAGE,
+    validPage * ITEMS_PER_PAGE
   );
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 only when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchParams, activeConnectionFilter]);
@@ -90,7 +94,7 @@ export default function Contacts() {
             <ContactTable
               contacts={paginatedContacts}
               isLoading={isLoading}
-              currentPage={currentPage}
+              currentPage={validPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
               onFilterConnections={setActiveConnectionFilter}
