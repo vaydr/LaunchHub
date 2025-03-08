@@ -55,7 +55,6 @@ export default function ContactTable({
         </TableHeader>
         <TableBody>
           {contacts.map((contact) => {
-            // Get the connected contacts for hover display
             const connectedContacts = contact.connections
               .map(id => contacts.find(c => c.id === id))
               .filter((c): c is Contact => c !== undefined);
@@ -88,14 +87,14 @@ export default function ContactTable({
                             activeConnectionFilter === contact.id ? 'text-primary' : ''
                           }`}
                         />
-                        {contact.connections.length}
+                        {connectedContacts.length}
                       </Button>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-80">
                       <div className="space-y-1">
                         <h4 className="text-sm font-semibold">Connected to:</h4>
                         <div className="text-sm text-muted-foreground">
-                          {connectedContacts.map((connection) => (
+                          {connectedContacts.map(connection => (
                             <div key={connection.id} className="py-1">
                               {connection.name}
                             </div>

@@ -43,25 +43,26 @@ export default function Contacts() {
     }
   });
 
-  // Filter contacts based on connection if active
-  let filteredContacts = contacts;
+  // Filter contacts if showing connections for a specific person
+  let displayContacts = contacts;
   const activePerson = activeConnectionFilter ? contacts.find(c => c.id === activeConnectionFilter) : null;
 
   if (activePerson) {
-    filteredContacts = contacts.filter(contact => 
+    // Filter to only show contacts that this person is connected to
+    displayContacts = contacts.filter(contact => 
       activePerson.connections.includes(contact.id)
     );
   }
 
-  // Paginate the filtered contacts
-  const paginatedContacts = filteredContacts.slice(
+  // Paginate the contacts for the table
+  const paginatedContacts = displayContacts.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  const totalPages = Math.ceil(filteredContacts.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(displayContacts.length / ITEMS_PER_PAGE);
 
-  // Reset page when filters change
+  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchParams, activeConnectionFilter]);
@@ -131,7 +132,7 @@ export default function Contacts() {
       >
         <div className="container mx-auto px-4 py-24">
           <h2 className="text-4xl font-bold mb-8 text-white">Network Visualization</h2>
-          <NetworkGraph contacts={filteredContacts} />
+          <NetworkGraph contacts={displayContacts} />
         </div>
       </div>
     </div>
