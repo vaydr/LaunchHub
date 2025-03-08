@@ -47,7 +47,9 @@ export default function Contacts() {
       if (overlayRef.current) {
         const scrolled = window.scrollY;
         const viewportHeight = window.innerHeight;
-        const translateY = Math.max(0, viewportHeight - scrolled);
+        // Only start moving the overlay when we're 75% down the page
+        const threshold = viewportHeight * 0.75;
+        const translateY = Math.max(0, viewportHeight - (scrolled - threshold));
         overlayRef.current.style.transform = `translateY(${translateY}px)`;
       }
     };
@@ -57,7 +59,7 @@ export default function Contacts() {
   }, []);
 
   return (
-    <div className="min-h-[200vh] bg-background">
+    <div className="min-h-[300vh] bg-background"> {/* Increased height to allow more scrolling */}
       <div className="container mx-auto py-8 px-4">
         <Button 
           variant="ghost" 
@@ -87,6 +89,9 @@ export default function Contacts() {
             />
           </CardContent>
         </Card>
+
+        {/* Add spacing to ensure content doesn't get hidden behind overlay */}
+        <div className="h-screen" /> 
       </div>
 
       {/* Network Visualization Overlay */}
@@ -95,7 +100,7 @@ export default function Contacts() {
         className="fixed inset-0 bg-black/95"
         style={{ 
           transform: 'translateY(100vh)',
-          transition: 'transform 0.1s linear'
+          transition: 'transform 0.3s ease-out'
         }}
       >
         <div className="container mx-auto px-4 py-24">
