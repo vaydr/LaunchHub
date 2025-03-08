@@ -12,73 +12,240 @@ export class MemStorage implements IStorage {
   private contacts: Map<number, Contact>;
   private currentId: number;
 
-  // Added function to generate mock data
-  private generateMockData(count: number = 200): InsertContact[] {
-    const departments = [
-      "EECS", "Biology", "Physics", "Mathematics", "Chemistry",
-      "Mechanical Engineering", "Aeronautics", "Materials Science",
-      "Civil Engineering", "Nuclear Science"
-    ];
-    const roles = [
-      "Undergraduate", "Graduate Student", "Professor", "Research Scientist",
-      "PostDoc", "Lab Director", "Department Head", "Teaching Assistant"
-    ];
-    const years = [2024, 2025, 2026, 2027, 2028, null];
-
-    const mockContacts: InsertContact[] = [];
-
-    // Generate contacts
-    for (let i = 1; i <= count; i++) {
-      const department = departments[Math.floor(Math.random() * departments.length)];
-      const role = roles[Math.floor(Math.random() * roles.length)];
-      const year = role === "Professor" || role === "Research Scientist" ?
-        null : years[Math.floor(Math.random() * years.length)];
-
-      mockContacts.push({
-        name: `Person ${i}`,
-        kerberos: `person${i}`,
-        email: `person${i}@mit.edu`,
-        department,
-        year,
-        role,
-        contactMethods: {
-          ...(Math.random() > 0.5 && { phone: `617-555-${String(1000 + i).padStart(4, '0')}` }),
-          ...(Math.random() > 0.3 && { slack: `@person${i}` }),
-          ...(Math.random() > 0.7 && { office: `${Math.floor(Math.random() * 38)}-${Math.floor(Math.random() * 500)}` })
-        },
-        notes: Math.random() > 0.5 ? `Research interests in ${department} and related fields` : undefined,
-        interactionStrength: Math.floor(Math.random() * 10),
-        connections: [] // Will be filled after all contacts are created
-      });
-    }
-
-    // Generate connections
-    mockContacts.forEach((contact, idx) => {
-      const numConnections = 5 + Math.floor(Math.random() * 15); // 5-20 connections per person
-      const possibleConnections = new Set<number>();
-
-      // Prefer connections within same department and role
-      mockContacts.forEach((other, otherIdx) => {
-        if (idx !== otherIdx && // No self-connections
-            (other.department === contact.department || Math.random() > 0.7)) {
-          possibleConnections.add(otherIdx + 1);
-        }
-      });
-
-      const connections = Array.from(possibleConnections)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, numConnections);
-
-      contact.connections = connections;
-    });
-
-    return mockContacts;
-  }
-
   constructor() {
     this.contacts = new Map();
     this.currentId = 1;
-    this.generateMockData(200).forEach(contact => this.createContact(contact));
+    this.initializeMockData();
+  }
+
+  private initializeMockData() {
+    const mockContacts: InsertContact[] = [
+      {
+        name: "John Smith",
+        kerberos: "jsmith",
+        email: "jsmith@mit.edu",
+        department: "EECS",
+        year: 2024,
+        role: "Graduate Student",
+        contactMethods: {
+          phone: "617-555-0123",
+          slack: "@jsmith",
+          office: "32-D463"
+        },
+        notes: "Working on distributed systems research",
+        interactionStrength: 8,
+        connections: [2, 3, 4, 8, 11, 14] // Added more connections
+      },
+      {
+        name: "Alice Johnson",
+        kerberos: "ajohnson",
+        email: "ajohnson@mit.edu",
+        department: "Biology",
+        year: 2025,
+        role: "Undergraduate",
+        contactMethods: {
+          slack: "@alice"
+        },
+        notes: "UROP student in synthetic biology lab",
+        interactionStrength: 5,
+        connections: [1, 3, 7, 9, 14, 15] // Added more connections
+      },
+      {
+        name: "David Chen",
+        kerberos: "dchen",
+        email: "dchen@mit.edu",
+        department: "EECS",
+        year: 2025,
+        role: "Undergraduate",
+        contactMethods: {
+          phone: "617-555-0234",
+          slack: "@dchen"
+        },
+        notes: "Active in IEEE student chapter",
+        interactionStrength: 3,
+        connections: [1, 2, 8, 11, 12] // Added more connections
+      },
+      {
+        name: "Maria Rodriguez",
+        kerberos: "mrodrig",
+        email: "mrodrig@mit.edu",
+        department: "Physics",
+        year: 2024,
+        role: "Graduate Student",
+        contactMethods: {
+          slack: "@mrodrig",
+          office: "13-3054"
+        },
+        notes: "Quantum computing research group",
+        interactionStrength: 6,
+        connections: [5, 10]
+      },
+      {
+        name: "Professor Sarah Lee",
+        kerberos: "slee",
+        email: "slee@mit.edu",
+        department: "Mathematics",
+        year: null,
+        role: "Professor",
+        contactMethods: {
+          phone: "617-555-0345",
+          office: "2-365"
+        },
+        notes: "Teaching 18.06 Linear Algebra",
+        interactionStrength: 7,
+        connections: [1, 6, 12]
+      },
+      {
+        name: "James Wilson",
+        kerberos: "jwilson",
+        email: "jwilson@mit.edu",
+        department: "Chemistry",
+        year: 2026,
+        role: "Undergraduate",
+        contactMethods: {
+          slack: "@jwilson"
+        },
+        notes: "Chemistry Club President",
+        interactionStrength: 4,
+        connections: [4, 13]
+      },
+      {
+        name: "Emily Brown",
+        kerberos: "ebrown",
+        email: "ebrown@mit.edu",
+        department: "Biology",
+        year: 2024,
+        role: "Research Scientist",
+        contactMethods: {
+          phone: "617-555-0456",
+          office: "68-580"
+        },
+        notes: "Leading cancer research project",
+        interactionStrength: 9,
+        connections: [2, 8, 14]
+      },
+      {
+        name: "Michael Zhang",
+        kerberos: "mzhang",
+        email: "mzhang@mit.edu",
+        department: "EECS",
+        year: 2027,
+        role: "Undergraduate",
+        contactMethods: {
+          slack: "@mzhang"
+        },
+        notes: "Interested in machine learning",
+        interactionStrength: 2,
+        connections: [1, 3, 11]
+      },
+      {
+        name: "Dr. Robert Taylor",
+        kerberos: "rtaylor",
+        email: "rtaylor@mit.edu",
+        department: "Mechanical Engineering",
+        year: null,
+        role: "Professor",
+        contactMethods: {
+          phone: "617-555-0567",
+          office: "3-137",
+          slack: "@rtaylor"
+        },
+        notes: "Robotics lab director",
+        interactionStrength: 8,
+        connections: [9, 12, 15]
+      },
+      {
+        name: "Sofia Patel",
+        kerberos: "spatel",
+        email: "spatel@mit.edu",
+        department: "Mathematics",
+        year: 2025,
+        role: "Graduate Student",
+        contactMethods: {
+          slack: "@spatel",
+          office: "2-333"
+        },
+        notes: "Research in topology",
+        interactionStrength: 5,
+        connections: [4, 14, 16]
+      },
+      {
+        name: "Lucas Kim",
+        kerberos: "lkim",
+        email: "lkim@mit.edu",
+        department: "Physics",
+        year: 2026,
+        role: "Undergraduate",
+        contactMethods: {
+          phone: "617-555-0678"
+        },
+        notes: "Physics Olympiad mentor",
+        interactionStrength: 6,
+        connections: [3, 10, 15]
+      },
+      {
+        name: "Professor Emma Davis",
+        kerberos: "edavis",
+        email: "edavis@mit.edu",
+        department: "EECS",
+        year: null,
+        role: "Professor",
+        contactMethods: {
+          phone: "617-555-0789",
+          office: "32-G492",
+          slack: "@edavis"
+        },
+        notes: "AI Ethics research group",
+        interactionStrength: 9,
+        connections: [1, 3, 8, 17]
+      },
+      {
+        name: "Thomas Anderson",
+        kerberos: "tanders",
+        email: "tanders@mit.edu",
+        department: "Chemistry",
+        year: 2024,
+        role: "Graduate Student",
+        contactMethods: {
+          slack: "@tanders",
+          office: "18-090"
+        },
+        notes: "Materials chemistry research",
+        interactionStrength: 4,
+        connections: [6, 13]
+      },
+      {
+        name: "Olivia Wang",
+        kerberos: "owang",
+        email: "owang@mit.edu",
+        department: "Biology",
+        year: 2027,
+        role: "Undergraduate",
+        contactMethods: {
+          slack: "@owang"
+        },
+        notes: "Synthetic biology club member",
+        interactionStrength: 3,
+        connections: [2, 7, 10]
+      },
+      {
+        name: "Dr. Alexander Green",
+        kerberos: "agreen",
+        email: "agreen@mit.edu",
+        department: "Mathematics",
+        year: null,
+        role: "Research Scientist",
+        contactMethods: {
+          phone: "617-555-0890",
+          office: "2-245"
+        },
+        notes: "Number theory specialist",
+        interactionStrength: 7,
+        connections: [5, 14, 16]
+      }
+    ];
+
+    mockContacts.forEach(contact => this.createContact(contact));
   }
 
   async getContact(id: number): Promise<Contact | undefined> {
