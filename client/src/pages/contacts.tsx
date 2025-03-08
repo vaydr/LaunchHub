@@ -43,13 +43,13 @@ export default function Contacts() {
     }
   });
 
-  // Filter contacts based on connections if activeConnectionFilter is set
+  // Filter contacts based on connection if active
   let filteredContacts = contacts;
   const activePerson = activeConnectionFilter ? contacts.find(c => c.id === activeConnectionFilter) : null;
 
-  if (activePerson && activePerson.connections) {
+  if (activePerson) {
     filteredContacts = contacts.filter(contact => 
-      activePerson.connections?.includes(contact.id)
+      activePerson.connections.includes(contact.id)
     );
   }
 
@@ -61,10 +61,10 @@ export default function Contacts() {
 
   const totalPages = Math.ceil(filteredContacts.length / ITEMS_PER_PAGE);
 
-  // Only reset page when filters change
+  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchParams, activeConnectionFilter]); // Dependencies that should trigger page reset
+  }, [searchParams, activeConnectionFilter]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -131,7 +131,7 @@ export default function Contacts() {
       >
         <div className="container mx-auto px-4 py-24">
           <h2 className="text-4xl font-bold mb-8 text-white">Network Visualization</h2>
-          {contacts && <NetworkGraph contacts={filteredContacts} />}
+          <NetworkGraph contacts={filteredContacts} />
         </div>
       </div>
     </div>

@@ -54,11 +54,9 @@ export default function ContactTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {contacts.length > 0 ? contacts.map((contact) => {
-            const isActive = activeConnectionFilter === contact.id;
-
-            // Get all connected contacts
-            const connectionsList = (contact.connections || [])
+          {contacts.map((contact) => {
+            // Get the connected contacts for hover display
+            const connectedContacts = contact.connections
               .map(id => contacts.find(c => c.id === id))
               .filter((c): c is Contact => c !== undefined);
 
@@ -85,15 +83,19 @@ export default function ContactTable({
                         className="font-mono"
                         onClick={() => onFilterConnections(contact.id)}
                       >
-                        <Share2 className={`h-4 w-4 mr-2 ${isActive ? 'text-primary' : ''}`} />
-                        {connectionsList.length}
+                        <Share2 
+                          className={`h-4 w-4 mr-2 ${
+                            activeConnectionFilter === contact.id ? 'text-primary' : ''
+                          }`}
+                        />
+                        {contact.connections.length}
                       </Button>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-80">
                       <div className="space-y-1">
                         <h4 className="text-sm font-semibold">Connected to:</h4>
                         <div className="text-sm text-muted-foreground">
-                          {connectionsList.map(connection => (
+                          {connectedContacts.map((connection) => (
                             <div key={connection.id} className="py-1">
                               {connection.name}
                             </div>
@@ -105,11 +107,7 @@ export default function ContactTable({
                 </TableCell>
               </TableRow>
             );
-          }) : (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-4">No contacts found</TableCell>
-            </TableRow>
-          )}
+          })}
         </TableBody>
       </Table>
 
