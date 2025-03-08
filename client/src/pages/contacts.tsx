@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -35,6 +35,21 @@ export default function Contacts() {
     }
   });
 
+  // Memoize filtered contacts to prevent recalculation on every render
+  const filteredContacts = useMemo(() => {
+    if (!activeConnectionFilter) return contacts;
+
+    const activePerson = contacts.find(c => c.id === activeConnectionFilter);
+    if (!activePerson) return contacts;
+
+    return contacts.filter(contact => activePerson.connections.includes(contact.id));
+  }, [contacts, activeConnectionFilter]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredContacts.length / ITEMS_PER_PAGE);
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedContacts = filteredContacts.slice(start, start + ITEMS_PER_PAGE);
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -69,10 +84,10 @@ export default function Contacts() {
               onClearConnectionFilter={() => setActiveConnectionFilter(null)}
             />
             <ContactTable
-              contacts={contacts}
+              contacts={paginatedContacts}
               isLoading={isLoading}
               currentPage={currentPage}
-              itemsPerPage={ITEMS_PER_PAGE}
+              totalPages={totalPages}
               onPageChange={setCurrentPage}
               onFilterConnections={setActiveConnectionFilter}
               activeConnectionFilter={activeConnectionFilter}

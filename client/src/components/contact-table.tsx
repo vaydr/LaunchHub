@@ -15,7 +15,7 @@ interface ContactTableProps {
   contacts: Contact[];
   isLoading: boolean;
   currentPage: number;
-  itemsPerPage: number;
+  totalPages: number;
   onPageChange: (page: number) => void;
   onFilterConnections: (id: number) => void;
   activeConnectionFilter: number | null;
@@ -25,7 +25,7 @@ export default function ContactTable({
   contacts,
   isLoading,
   currentPage,
-  itemsPerPage,
+  totalPages,
   onPageChange,
   onFilterConnections,
   activeConnectionFilter
@@ -35,19 +35,6 @@ export default function ContactTable({
   if (isLoading) {
     return <div>Loading contacts...</div>;
   }
-
-  // First apply connection filter if active
-  const displayContacts = activeConnectionFilter 
-    ? contacts.filter(contact => {
-        const activePerson = contacts.find(c => c.id === activeConnectionFilter);
-        return activePerson?.connections.includes(contact.id);
-      })
-    : contacts;
-
-  // Then handle pagination
-  const totalPages = Math.ceil(displayContacts.length / itemsPerPage);
-  const start = (currentPage - 1) * itemsPerPage;
-  const paginatedContacts = displayContacts.slice(start, start + itemsPerPage);
 
   return (
     <div>
@@ -62,7 +49,7 @@ export default function ContactTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paginatedContacts.map((contact) => (
+          {contacts.map((contact) => (
             <TableRow
               key={contact.id}
               className="cursor-pointer hover:bg-muted/50"
