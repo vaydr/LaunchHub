@@ -37,14 +37,6 @@ export default function ContactTable({
 }: ContactTableProps) {
   const [_, setLocation] = useLocation();
 
-  // Find all names for the connections of a contact
-  const getConnectionNames = (contact: Contact) => {
-    return (contact.connections || [])
-      .map(id => contacts.find(c => c.id === id))
-      .filter((c): c is Contact => c !== undefined)
-      .map(c => c.name);
-  };
-
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -63,8 +55,11 @@ export default function ContactTable({
         </TableHeader>
         <TableBody>
           {contacts && contacts.length > 0 ? contacts.map((contact) => {
-            const connectionNames = getConnectionNames(contact);
             const isActive = activeConnectionFilter === contact.id;
+            // Get the actual Contact objects for connections
+            const connectionContacts = (contact.connections || [])
+              .map(id => contacts.find(c => c.id === id))
+              .filter((c): c is Contact => c !== undefined);
 
             return (
               <TableRow
@@ -97,9 +92,9 @@ export default function ContactTable({
                       <div className="space-y-1">
                         <h4 className="text-sm font-semibold">Connected to:</h4>
                         <div className="text-sm text-muted-foreground">
-                          {connectionNames.length > 0 ? (
-                            connectionNames.map((name, i) => (
-                              <div key={i} className="py-1">{name}</div>
+                          {connectionContacts.length > 0 ? (
+                            connectionContacts.map((connection) => (
+                              <div key={connection.id} className="py-1">{connection.name}</div>
                             ))
                           ) : (
                             <div className="py-1">No connections</div>
@@ -124,18 +119,18 @@ export default function ContactTable({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
           >
             Previous
           </Button>
-          <div className="text-sm">
+          <span className="flex items-center px-4">
             Page {currentPage} of {totalPages}
-          </div>
+          </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
             Next

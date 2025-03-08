@@ -24,38 +24,22 @@ export class MemStorage implements IStorage {
     const roles = ['Undergraduate', 'Graduate Student', 'Professor', 'Research Scientist', 'Postdoc'];
     const years = [2024, 2025, 2026, 2027];
 
-    // Generate clusters of people who are more likely to be connected
-    const clusters = departments.map(dept => ({
-      department: dept,
-      members: new Set<number>()
-    }));
-
+    // First create all contacts without connections
     const mockContacts: InsertContact[] = Array.from({ length: 200 }, (_, i) => {
       const id = i + 1;
       const department = departments[Math.floor(Math.random() * departments.length)];
       const role = roles[Math.floor(Math.random() * roles.length)];
-      const year = role === 'Undergraduate' ? years[Math.floor(Math.random() * years.length)] : years[0];
+      const year = role === 'Undergraduate' ? years[Math.floor(Math.random() * years.length)] : undefined;
 
-      // Add to department cluster
-      const cluster = clusters.find(c => c.department === department);
-      if (cluster) {
-        cluster.members.add(id);
-      }
-
-      // Generate realistic name
       const firstName = faker.person.firstName();
       const lastName = faker.person.lastName();
       const name = `${firstName} ${lastName}`;
-
-      // Generate realistic kerberos (first letter of first name + up to 7 chars of last name)
       const kerberos = (firstName[0] + lastName).toLowerCase().slice(0, 8);
 
-      // Generate more realistic room numbers based on MIT building numbers
       const buildingNum = Math.floor(Math.random() * 38) + 1;
       const roomNum = Math.floor(Math.random() * 999);
       const office = `${buildingNum}-${String(roomNum).padStart(3, '0')}`;
 
-      // Generate research interests based on department
       const researchAreas = {
         'EECS': ['Artificial Intelligence', 'Computer Systems', 'Robotics', 'Computer Security', 'Machine Learning'],
         'Biology': ['Synthetic Biology', 'Neuroscience', 'Genetics', 'Cell Biology', 'Systems Biology'],
@@ -82,54 +66,55 @@ export class MemStorage implements IStorage {
         },
         notes: `Research interests in ${researchArea}`,
         interactionStrength: Math.floor(Math.random() * 10),
-        connections: [] // Will be populated after all contacts are created
+        connections: []
       };
     });
 
     // Create all contacts first
     mockContacts.forEach(contact => this.createContact(contact));
 
-    // Now generate connections
-    // Keep track of all connections to ensure reciprocity
-    const allConnections = new Map<number, Set<number>>();
+    // Then establish connections
+    const connectionMap = new Map<number, Set<number>>();
 
-    this.contacts.forEach((contact) => {
-      if (!allConnections.has(contact.id)) {
-        allConnections.set(contact.id, new Set());
-      }
+    // Initialize empty sets for all contacts
+    for (let i = 1; i <= 200; i++) {
+      connectionMap.set(i, new Set());
+    }
 
-      const sameCluster = clusters.find(c => c.department === contact.department)?.members || new Set();
-      const desiredConnections = 3 + Math.floor(Math.random() * 5); // 3-8 connections
+    // Helper to add a bidirectional connection
+    const addConnection = (id1: number, id2: number) => {
+      connectionMap.get(id1)?.add(id2);
+      connectionMap.get(id2)?.add(id1);
+    };
 
-      // First try to add connections within the same department
-      Array.from(sameCluster).forEach(otherId => {
-        if (otherId !== contact.id && 
-            allConnections.get(contact.id)!.size < desiredConnections &&
-            (!allConnections.has(otherId) || allConnections.get(otherId)!.size < 8)) {
-          allConnections.get(contact.id)!.add(otherId);
-          if (!allConnections.has(otherId)) {
-            allConnections.set(otherId, new Set());
-          }
-          allConnections.get(otherId)!.add(contact.id);
-        }
-      });
+    // For each contact, add 3-8 connections
+    for (let id = 1; id <= 200; id++) {
+      const contact = this.contacts.get(id)!;
+      const desiredConnections = 3 + Math.floor(Math.random() * 6); // 3-8 connections
 
-      // If we still need more connections, add some from other departments
-      while (allConnections.get(contact.id)!.size < desiredConnections) {
-        const randomId = Math.floor(Math.random() * 200) + 1;
-        if (randomId !== contact.id && 
-            (!allConnections.has(randomId) || allConnections.get(randomId)!.size < 8)) {
-          allConnections.get(contact.id)!.add(randomId);
-          if (!allConnections.has(randomId)) {
-            allConnections.set(randomId, new Set());
-          }
-          allConnections.get(randomId)!.add(contact.id);
+      // Prefer connections within same department (higher probability)
+      const departmentContacts = Array.from(this.contacts.values())
+        .filter(c => c.id !== id && c.department === contact.department);
+
+      // Add department connections first (if available)
+      for (const deptContact of departmentContacts) {
+        if (connectionMap.get(id)!.size >= desiredConnections) break;
+        if (Math.random() < 0.4) { // 40% chance to connect with department colleague
+          addConnection(id, deptContact.id);
         }
       }
-    });
 
-    // Update all contacts with their final connection lists
-    allConnections.forEach((connections, id) => {
+      // If still need more connections, add random ones
+      while (connectionMap.get(id)!.size < desiredConnections) {
+        const randomId = 1 + Math.floor(Math.random() * 200);
+        if (randomId !== id && !connectionMap.get(id)!.has(randomId)) {
+          addConnection(id, randomId);
+        }
+      }
+    }
+
+    // Update all contacts with their final connections
+    connectionMap.forEach((connections, id) => {
       this.updateContact(id, {
         connections: Array.from(connections)
       });
@@ -175,7 +160,6 @@ export class MemStorage implements IStorage {
     // Sort by name for consistent ordering
     results.sort((a, b) => a.name.localeCompare(b.name));
 
-    // Return all results for client-side pagination
     return results;
   }
 
@@ -198,7 +182,7 @@ export class MemStorage implements IStorage {
       throw new Error("Contact not found");
     }
 
-    const updatedContact: Contact = {
+    const updatedContact = {
       ...contact,
       ...updates,
       id
