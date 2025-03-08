@@ -21,20 +21,23 @@ const DEPARTMENTS = [
 ];
 
 interface FilterTag {
-  type: 'department' | 'year';
+  type: 'department' | 'year' | 'connection';
   value: string;
+  label?: string;
 }
 
 interface SearchFiltersProps {
   onSearch: (params: Partial<SearchParams>) => void;
   connectionFilter: number[];
   onClearConnectionFilter: () => void;
+  contactNames?: Record<number, string>;
 }
 
 export default function SearchFilters({ 
   onSearch, 
   connectionFilter, 
-  onClearConnectionFilter 
+  onClearConnectionFilter,
+  contactNames = {}
 }: SearchFiltersProps) {
   const [query, setQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<FilterTag[]>([]);
@@ -57,6 +60,24 @@ export default function SearchFilters({
     });
   }, [query, selectedFilters, onSearch]);
 
+  // Add connection filter when it changes
+  useEffect(() => {
+    if (connectionFilter.length > 0) {
+      const connectionNames = connectionFilter.map(id => contactNames[id] || `Contact ${id}`).join(", ");
+      setSelectedFilters(prev => {
+        // Remove any existing connection filters
+        const withoutConnections = prev.filter(f => f.type !== 'connection');
+        return [...withoutConnections, {
+          type: 'connection',
+          value: 'connections',
+          label: `Connected to: ${connectionNames}`
+        }];
+      });
+    } else {
+      setSelectedFilters(prev => prev.filter(f => f.type !== 'connection'));
+    }
+  }, [connectionFilter, contactNames]);
+
   const handleAddFilter = (type: 'department' | 'year', value: string) => {
     // Don't add if already exists
     if (!selectedFilters.some(f => f.type === type && f.value === value)) {
@@ -65,9 +86,13 @@ export default function SearchFilters({
   };
 
   const handleRemoveFilter = (filter: FilterTag) => {
-    setSelectedFilters(prev => 
-      prev.filter(f => !(f.type === filter.type && f.value === filter.value))
-    );
+    if (filter.type === 'connection') {
+      onClearConnectionFilter();
+    } else {
+      setSelectedFilters(prev => 
+        prev.filter(f => !(f.type === filter.type && f.value === filter.value))
+      );
+    }
   };
 
   return (
@@ -114,14 +139,16 @@ export default function SearchFilters({
       </div>
 
       {/* Filter Tags */}
-      {(selectedFilters.length > 0 || connectionFilter.length > 0) && (
+      {selectedFilters.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selectedFilters.map((filter, index) => (
             <div
               key={`${filter.type}-${filter.value}-${index}`}
               className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-sm"
             >
-              <span className="capitalize">{filter.type}: {filter.value}</span>
+              <span className="capitalize">
+                {filter.label || `${filter.type}: ${filter.value}`}
+              </span>
               <Button
                 variant="ghost"
                 size="icon"
@@ -132,20 +159,6 @@ export default function SearchFilters({
               </Button>
             </div>
           ))}
-
-          {connectionFilter.length > 0 && (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-sm">
-              <span>Showing Connections ({connectionFilter.length})</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-4 w-4 rounded-full hover:bg-primary/20"
-                onClick={onClearConnectionFilter}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
         </div>
       )}
     </div>
