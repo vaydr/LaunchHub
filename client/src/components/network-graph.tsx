@@ -1,65 +1,92 @@
-import { useCallback, useRef, useState } from 'react';
-import { ForceGraph2D } from 'react-force-graph';
+import { useEffect, useRef, useState } from 'react';
+import { Network } from 'vis-network';
 import { Card, CardContent } from "@/components/ui/card";
-import type { NetworkGraph, NetworkNode, NetworkLink, Contact } from "@shared/schema";
+import type { Contact } from "@shared/schema";
 
 interface NetworkGraphProps {
   contacts: Contact[];
 }
 
 export default function NetworkGraph({ contacts }: NetworkGraphProps) {
-  const [hoveredNode, setHoveredNode] = useState<NetworkNode | null>(null);
-  const graphRef = useRef<any>();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveredNode, setHoveredNode] = useState<Contact | null>(null);
 
-  // Transform contacts into graph data
-  const graphData: NetworkGraph = {
-    nodes: contacts.map(contact => ({
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // Transform contacts into vis-network format
+    const nodes = contacts.map(contact => ({
       id: contact.id,
-      name: contact.name,
-      department: contact.department,
-      year: contact.year || undefined,
-      group: contact.department
-    })),
-    links: contacts.flatMap(contact => 
-      (contact.connections || []).map(targetId => ({
-        source: contact.id,
-        target: targetId,
-        value: 1
-      }))
-    ).filter(link => 
-      // Only show links where both nodes are in the filtered set
-      contacts.some(c => c.id === link.source) && 
-      contacts.some(c => c.id === link.target)
-    )
-  };
+      label: contact.name,
+      title: contact.name,
+      group: contact.department,
+      color: contact.department === 'EECS' ? '#9333ea' : '#4f46e5',
+    }));
 
-  const handleNodeHover = useCallback((node: NetworkNode | null) => {
-    setHoveredNode(node);
-    if (graphRef.current) {
-      graphRef.current.style.cursor = node ? 'pointer' : 'default';
-    }
-  }, []);
+    const edges = contacts.flatMap(contact => 
+      (contact.connections || []).map(targetId => ({
+        from: contact.id,
+        to: targetId,
+        color: { color: 'rgba(255, 255, 255, 0.2)' }
+      }))
+    ).filter(edge => 
+      contacts.some(c => c.id === edge.from) && 
+      contacts.some(c => c.id === edge.to)
+    );
+
+    const data = { nodes, edges };
+
+    const options = {
+      nodes: {
+        shape: 'dot',
+        size: 16,
+        font: {
+          color: '#ffffff',
+          size: 14,
+        },
+        borderWidth: 2,
+        shadow: true
+      },
+      edges: {
+        width: 1,
+        smooth: {
+          type: 'continuous'
+        }
+      },
+      physics: {
+        stabilization: false,
+        barnesHut: {
+          gravitationalConstant: -80000,
+          springConstant: 0.001,
+          springLength: 200
+        }
+      },
+      interaction: {
+        hover: true,
+        tooltipDelay: 200
+      },
+      background: 'transparent'
+    };
+
+    const network = new Network(containerRef.current, data, options);
+
+    network.on('hoverNode', (params) => {
+      const contact = contacts.find(c => c.id === params.node);
+      setHoveredNode(contact || null);
+    });
+
+    network.on('blurNode', () => {
+      setHoveredNode(null);
+    });
+
+    return () => {
+      network.destroy();
+    };
+  }, [contacts]);
 
   return (
     <div className="relative h-[600px] w-full bg-black/90 rounded-lg">
-      <ForceGraph2D
-        ref={graphRef}
-        graphData={graphData}
-        nodeColor={node => (node as NetworkNode).group === 'EECS' ? '#9333ea' : '#4f46e5'}
-        nodeRelSize={8}
-        linkColor={() => 'rgba(255,255,255,0.2)'}
-        backgroundColor="transparent"
-        onNodeHover={handleNodeHover}
-        nodeCanvasObject={(node: NetworkNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-          const label = node.name;
-          const fontSize = 12/globalScale;
-          ctx.font = `${fontSize}px Sans-Serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillStyle = 'white';
-          ctx.fillText(label, node.x!, node.y! + 12);
-        }}
-      />
+      <div ref={containerRef} className="h-full w-full" />
 
       {/* Hover Info Card */}
       {hoveredNode && (
@@ -69,6 +96,10 @@ export default function NetworkGraph({ contacts }: NetworkGraphProps) {
             <p className="text-sm text-gray-300">{hoveredNode.department}</p>
             {hoveredNode.year && (
               <p className="text-sm text-gray-300">Class of {hoveredNode.year}</p>
+            )}
+            <p className="text-sm text-gray-300 mt-2">{hoveredNode.role}</p>
+            {hoveredNode.notes && (
+              <p className="text-sm text-gray-300 mt-2">{hoveredNode.notes}</p>
             )}
           </CardContent>
         </Card>
