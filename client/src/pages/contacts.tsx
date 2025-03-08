@@ -35,8 +35,8 @@ export default function Contacts() {
     }
   });
 
-  // Single source of truth for filtered contacts
-  const { filteredContacts, paginatedContacts, totalPages } = useMemo(() => {
+  // Single source of truth for filtered contacts and pagination
+  const { paginatedContacts, totalPages, adjustedCurrentPage } = useMemo(() => {
     // Apply connection filter if active
     const filtered = activeConnectionFilter 
       ? contacts.filter(contact => {
@@ -45,17 +45,27 @@ export default function Contacts() {
         })
       : contacts;
 
-    // Calculate pagination
+    // Calculate total pages
     const total = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    const paginated = filtered.slice(start, Math.min(start + ITEMS_PER_PAGE, filtered.length));
+
+    // Ensure current page is valid for the filtered set
+    const adjustedPage = Math.min(currentPage, total || 1);
+
+    // Calculate slice indices based on adjusted page
+    const start = (adjustedPage - 1) * ITEMS_PER_PAGE;
+    const paginated = filtered.slice(start, start + ITEMS_PER_PAGE);
 
     return {
-      filteredContacts: filtered,
       paginatedContacts: paginated,
-      totalPages: total
+      totalPages: total,
+      adjustedCurrentPage: adjustedPage
     };
   }, [contacts, activeConnectionFilter, currentPage]);
+
+  // If the adjusted page is different from current page, update it
+  if (adjustedCurrentPage !== currentPage) {
+    setCurrentPage(adjustedCurrentPage);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -88,7 +98,7 @@ export default function Contacts() {
             <ContactTable
               contacts={paginatedContacts}
               isLoading={isLoading}
-              currentPage={currentPage}
+              currentPage={adjustedCurrentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
               onFilterConnections={setActiveConnectionFilter}
