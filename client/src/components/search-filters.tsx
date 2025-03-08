@@ -46,8 +46,8 @@ export default function SearchFilters({ onSearch }: SearchFiltersProps) {
 
     onSearch({
       query,
-      department: departments.length > 0 ? departments[0] : undefined, // For now, use first department since backend doesn't support multiple
-      year: years.length > 0 ? years[0] : undefined, // For now, use first year since backend doesn't support multiple
+      departments,
+      years
     });
   }, [query, selectedFilters, onSearch]);
 

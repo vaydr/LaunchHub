@@ -48,7 +48,6 @@ export class MemStorage implements IStorage {
         notes: "UROP student in synthetic biology lab",
         interactionStrength: 5
       }
-      // Add more mock contacts as needed
     ];
 
     mockContacts.forEach(contact => this.createContact(contact));
@@ -70,22 +69,35 @@ export class MemStorage implements IStorage {
       );
     }
 
-    if (params.department) {
+    // Support for multiple departments
+    if (params.departments && params.departments.length > 0) {
+      results = results.filter(contact => 
+        params.departments!.includes(contact.department)
+      );
+    } else if (params.department) {
+      // Backward compatibility for single department
       results = results.filter(contact => 
         contact.department === params.department
       );
     }
 
-    if (params.year) {
+    // Support for multiple years
+    if (params.years && params.years.length > 0) {
+      results = results.filter(contact => 
+        contact.year && params.years!.includes(contact.year)
+      );
+    } else if (params.year) {
+      // Backward compatibility for single year
       results = results.filter(contact => 
         contact.year === params.year
       );
     }
 
+    // Pagination
     const limit = params.limit || 10;
     const page = params.page || 1;
     const start = (page - 1) * limit;
-    
+
     return results.slice(start, start + limit);
   }
 

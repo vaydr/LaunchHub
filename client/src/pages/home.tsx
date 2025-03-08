@@ -16,11 +16,22 @@ export default function Home() {
     queryFn: () => {
       const params = new URLSearchParams();
       if (searchParams.query) params.append('query', searchParams.query);
-      if (searchParams.department) params.append('department', searchParams.department);
-      if (searchParams.year) params.append('year', searchParams.year.toString());
+
+      // Handle array parameters
+      if (searchParams.departments) {
+        searchParams.departments.forEach(dept => 
+          params.append('departments', dept)
+        );
+      }
+      if (searchParams.years) {
+        searchParams.years.forEach(year => 
+          params.append('years', year.toString())
+        );
+      }
+
       params.append('page', searchParams.page?.toString() || '1');
       params.append('limit', searchParams.limit?.toString() || '10');
-      
+
       return fetch(`/api/contacts?${params}`).then(res => res.json());
     }
   });

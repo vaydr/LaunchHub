@@ -28,11 +28,13 @@ export const insertContactSchema = createInsertSchema(contacts).omit({
 export type InsertContact = z.infer<typeof insertContactSchema>;
 export type Contact = typeof contacts.$inferSelect;
 
-// Search params type
+// Search params type with support for multiple departments and years
 export const searchParamsSchema = z.object({
   query: z.string().optional(),
-  department: z.string().optional(),
-  year: z.number().optional(),
+  department: z.string().optional(), // Keep for backward compatibility
+  departments: z.array(z.string()).optional(),
+  year: z.number().optional(), // Keep for backward compatibility
+  years: z.array(z.number()).optional(),
   page: z.number().optional(),
   limit: z.number().optional(),
 });

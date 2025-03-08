@@ -8,9 +8,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all contacts with search/filter
   app.get("/api/contacts", async (req, res) => {
     try {
+      // Parse array parameters
+      const departments = req.query.departments ? 
+        (Array.isArray(req.query.departments) ? req.query.departments : [req.query.departments]) as string[] : 
+        undefined;
+
+      const years = req.query.years ? 
+        (Array.isArray(req.query.years) ? req.query.years : [req.query.years])
+          .map(y => parseInt(y as string))
+          .filter(y => !isNaN(y)) :
+        undefined;
+
       const params = searchParamsSchema.parse({
         query: req.query.query as string,
+        departments,
         department: req.query.department as string,
+        years,
         year: req.query.year ? parseInt(req.query.year as string) : undefined,
         page: req.query.page ? parseInt(req.query.page as string) : 1,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 10
@@ -32,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const contact = await storage.getContact(id);
-      
+
       if (!contact) {
         res.status(404).json({ message: "Contact not found" });
         return;
@@ -49,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
-      
+
       const contact = await storage.updateContact(id, updates);
       res.json(contact);
     } catch (error) {
