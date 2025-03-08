@@ -1,112 +1,103 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import ContactTable from "@/components/contact-table";
-import SearchFilters from "@/components/search-filters";
-import { Users, Search, Star, Link } from "lucide-react";
-import type { SearchParams } from "@shared/schema";
+import { motion } from "framer-motion";
 
 export default function Home() {
-  const [searchParams, setSearchParams] = useState<SearchParams>({
-    page: 1,
-    limit: 10
-  });
+  const [_, setLocation] = useLocation();
+  const overlayRef = useRef<HTMLDivElement>(null);
 
-  const { data: contacts, isLoading } = useQuery({
-    queryKey: ['/api/contacts', searchParams],
-    queryFn: () => {
-      const params = new URLSearchParams();
-      if (searchParams.query) params.append('query', searchParams.query);
-
-      // Handle array parameters
-      if (searchParams.departments) {
-        searchParams.departments.forEach(dept => 
-          params.append('departments', dept)
-        );
+  useEffect(() => {
+    const handleScroll = () => {
+      if (overlayRef.current) {
+        const scrolled = window.scrollY;
+        const viewportHeight = window.innerHeight;
+        const translateY = Math.max(0, viewportHeight - scrolled);
+        overlayRef.current.style.transform = `translateY(${translateY}px)`;
       }
-      if (searchParams.years) {
-        searchParams.years.forEach(year => 
-          params.append('years', year.toString())
-        );
-      }
+    };
 
-      params.append('page', searchParams.page?.toString() || '1');
-      params.append('limit', searchParams.limit?.toString() || '10');
-
-      return fetch(`/api/contacts?${params}`).then(res => res.json());
-    }
-  });
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-background py-24 sm:py-32">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent animate-fade-in">
-              MIT Directory
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
-              Your smart contact management system for the MIT community. Keep track of your connections, interactions, and build meaningful relationships.
-            </p>
-          </div>
-
-          {/* Features Grid */}
-          <div className="mt-20 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                icon: <Users className="h-8 w-8" />,
-                title: "Smart Directory",
-                description: "Access the MIT community directory with comprehensive filtering and search capabilities."
-              },
-              {
-                icon: <Star className="h-8 w-8" />,
-                title: "Interaction Tracking",
-                description: "Keep track of your interactions and build stronger connections over time."
-              },
-              {
-                icon: <Link className="h-8 w-8" />,
-                title: "Multiple Contact Methods",
-                description: "Connect via email, Slack, or schedule office visits - all in one place."
-              }
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className="flex flex-col items-center text-center p-6 rounded-lg bg-card hover:bg-accent/5 transition-colors"
-              >
-                <div className="rounded-full bg-primary/10 p-3 text-primary">
-                  {feature.icon}
-                </div>
-                <h3 className="mt-4 text-xl font-semibold">{feature.title}</h3>
-                <p className="mt-2 text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
-          </div>
+    <div className="relative min-h-[200vh]">
+      {/* Animated Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-purple-600 via-purple-900 to-indigo-900 animate-gradient">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2),transparent)] animate-pulse"></div>
         </div>
       </div>
 
-      {/* Directory Section */}
-      <div className="container mx-auto py-8 px-4">
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold flex items-center gap-2">
-              <Search className="h-6 w-6 text-primary" />
-              Directory Search
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SearchFilters
-              onSearch={(params) => setSearchParams(prev => ({ ...prev, ...params, page: 1 }))}
-            />
-            <ContactTable
-              contacts={contacts || []}
-              isLoading={isLoading}
-              onPageChange={(page) => setSearchParams(prev => ({ ...prev, page }))}
-              currentPage={searchParams.page || 1}
-            />
-          </CardContent>
-        </Card>
+      {/* Hero Content */}
+      <div className="relative min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <motion.h1 
+            className="text-5xl md:text-7xl font-bold text-white mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            MIT Directory
+          </motion.h1>
+          <motion.p 
+            className="text-xl text-white/80 max-w-2xl mx-auto mb-12"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            Connect with the MIT community. Track interactions. Build relationships.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            <Button
+              size="lg"
+              className="bg-white text-purple-900 hover:bg-white/90"
+              onClick={() => setLocation("/contacts")}
+            >
+              Open Directory
+            </Button>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Black Overlay */}
+      <div 
+        ref={overlayRef}
+        className="fixed inset-0 bg-black"
+        style={{ 
+          transform: 'translateY(100vh)',
+          transition: 'transform 0.1s linear'
+        }}
+      >
+        <div className="container mx-auto px-4 py-24 text-white">
+          <div className="max-w-4xl mx-auto space-y-24">
+            <section>
+              <h2 className="text-4xl font-bold mb-6">Smart Contact Management</h2>
+              <p className="text-lg text-gray-300">
+                Keep track of your network within the MIT community with our intelligent contact management system. Never lose touch with important connections.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-4xl font-bold mb-6">Track Meaningful Interactions</h2>
+              <p className="text-lg text-gray-300">
+                Record and measure the strength of your interactions. Build stronger relationships over time with smart reminders and insights.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-4xl font-bold mb-6">Future Integrations</h2>
+              <p className="text-lg text-gray-300">
+                Coming soon: Connect with Outlook, Gmail, and other platforms to automatically sync your contacts and interactions across all your communication channels.
+              </p>
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   );
