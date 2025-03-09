@@ -10,11 +10,6 @@ export const contacts = pgTable("contacts", {
   department: text("department").notNull(),
   year: integer("year"),
   role: text("role").notNull(),
-  contactMethods: jsonb("contact_methods").$type<{
-    phone?: string;
-    slack?: string;
-    office?: string;
-  }>().notNull(),
   notes: text("notes"),
   interactionStrength: integer("interaction_strength").default(0),
   lastInteraction: timestamp("last_interaction"),

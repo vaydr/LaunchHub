@@ -20,16 +20,16 @@ export class MemStorage implements IStorage {
   }
 
   private initializeMockData() {
-    const departments = ['EECS', 'Biology', 'Physics', 'Mathematics', 'Chemistry', 'Mechanical Engineering'];
+    const departments = ['EECS', 'Biology', 'Physics', 'Mathematics', 'Chemistry', 'MechE', 'Economics'];
     const roles = ['Undergraduate', 'Graduate Student', 'Professor', 'Research Scientist', 'Postdoc'];
-    const years = [2024, 2025, 2026, 2027];
+    const years = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
 
     // First create all contacts without any connections
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 250; i++) {
       const id = i + 1;
       const department = departments[Math.floor(Math.random() * departments.length)];
       const role = roles[Math.floor(Math.random() * roles.length)];
-      const year = role === 'Undergraduate' ? years[Math.floor(Math.random() * years.length)] : undefined;
+      const year = role === 'Undergraduate' || role === 'Graduate Student' || role === 'Postdoc' ? years[Math.floor(Math.random() * years.length)] : undefined;
 
       const firstName = faker.person.firstName();
       const lastName = faker.person.lastName();
@@ -42,13 +42,8 @@ export class MemStorage implements IStorage {
         kerberos,
         email: `${kerberos}@mit.edu`,
         department,
-        year,
+        year: year ?? null,
         role,
-        contactMethods: {
-          phone: faker.phone.number('617-###-####'),
-          slack: `@${kerberos}`,
-          office: `${Math.floor(Math.random() * 38) + 1}-${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`,
-        },
         notes: `Research interests in ${department}`,
         interactionStrength: 0,
         lastInteraction: new Date(),
@@ -62,6 +57,13 @@ export class MemStorage implements IStorage {
       const contact2 = this.contacts.get(id2)!;
 
       // Add bidirectional connection
+      if (!contact1.connections) {
+        contact1.connections = [];
+      }
+      if (!contact2.connections) {
+        contact2.connections = [];
+      }
+      
       if (!contact1.connections.includes(id2)) {
         contact1.connections.push(id2);
         this.contacts.set(id1, contact1);
@@ -72,41 +74,17 @@ export class MemStorage implements IStorage {
       }
     };
 
-    // For each contact, add 5-8 connections
-    Array.from(this.contacts.keys()).forEach(id => {
-      const contact = this.contacts.get(id)!;
-      const numConnections = 5 + Math.floor(Math.random() * 4); // 5-8 connections
-
-      // Get potential connections from same department
-      const sameDept = Array.from(this.contacts.values())
-        .filter(c => c.id !== id && c.department === contact.department)
-        .map(c => c.id);
-
-      // Get potential connections from other departments
-      const otherDept = Array.from(this.contacts.values())
-        .filter(c => c.id !== id && c.department !== contact.department)
-        .map(c => c.id);
-
-      // Try to add ~60% connections from same department
-      const sameDeptCount = Math.min(Math.ceil(numConnections * 0.6), sameDept.length);
-      const shuffledSameDept = [...sameDept].sort(() => Math.random() - 0.5);
-
-      for (let i = 0; i < sameDeptCount; i++) {
-        if (i < shuffledSameDept.length) {
-          addConnection(id, shuffledSameDept[i]);
+    // Create connections with 10% probability
+    const contactIds = Array.from(this.contacts.keys());
+    
+    for (let i = 0; i < contactIds.length; i++) {
+      for (let j = i + 1; j < contactIds.length; j++) {
+        // 10% chance of creating a connection
+        if (Math.random() < 0.1) {
+          addConnection(contactIds[i], contactIds[j]);
         }
       }
-
-      // Fill remaining connections from other departments
-      const remainingConnections = numConnections - sameDeptCount;
-      const shuffledOtherDept = [...otherDept].sort(() => Math.random() - 0.5);
-
-      for (let i = 0; i < remainingConnections; i++) {
-        if (i < shuffledOtherDept.length) {
-          addConnection(id, shuffledOtherDept[i]);
-        }
-      }
-    });
+    }
   }
 
   async getContact(id: number): Promise<Contact | undefined> {
@@ -139,14 +117,16 @@ export class MemStorage implements IStorage {
 
     return results.sort((a, b) => a.name.localeCompare(b.name));
   }
-
   async createContact(contact: InsertContact): Promise<Contact> {
     const id = this.currentId++;
     const newContact: Contact = {
       ...contact,
       id,
+      year: contact.year ?? null,
       lastInteraction: new Date(),
-      connections: []
+      connections: [],
+      notes: contact.notes ?? null,
+      interactionStrength: contact.interactionStrength ?? 0,
     };
     this.contacts.set(id, newContact);
     return newContact;

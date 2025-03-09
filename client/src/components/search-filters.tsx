@@ -17,7 +17,8 @@ const DEPARTMENTS = [
   "Physics",
   "Mathematics",
   "Chemistry",
-  "Mechanical Engineering",
+  "Economics",
+  "MechE",
 ];
 
 interface FilterTag {

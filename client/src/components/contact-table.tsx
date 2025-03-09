@@ -35,7 +35,6 @@ export default function ContactTable({
   if (isLoading) {
     return <div>Loading contacts...</div>;
   }
-
   return (
     <div>
       <Table>
@@ -44,6 +43,7 @@ export default function ContactTable({
             <TableHead>Name</TableHead>
             <TableHead>Kerberos</TableHead>
             <TableHead>Department</TableHead>
+            <TableHead>Role</TableHead>
             <TableHead>Year</TableHead>
             <TableHead>Connections</TableHead>
           </TableRow>
@@ -62,6 +62,7 @@ export default function ContactTable({
               </TableCell>
               <TableCell>{contact.kerberos}</TableCell>
               <TableCell>{contact.department}</TableCell>
+              <TableCell>{contact.role}</TableCell>
               <TableCell>{contact.year}</TableCell>
               <TableCell>
                 <Button
@@ -75,7 +76,7 @@ export default function ContactTable({
                       activeConnectionFilter === contact.id ? 'text-primary' : ''
                     }`}
                   />
-                  {contact.connections.length}
+                  {contact.connections?.length || 0}
                 </Button>
               </TableCell>
             </TableRow>
