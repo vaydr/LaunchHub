@@ -246,7 +246,7 @@ export default function SearchFilters({
           size="sm" 
           onClick={toggleSearchMode}
           className={`
-            relative overflow-hidden
+            relative overflow-hidden w-[160px] justify-start
             ${isAdvancedSearch ? 'border-purple-500' : 'border-gray-300 dark:border-gray-700'}
             group
           `}
@@ -279,8 +279,8 @@ export default function SearchFilters({
               </motion.div>
               
               {/* Use a span for the text with direct group-hover class */}
-              <span className="transition-colors duration-300 group-hover:text-white">
-                SuperBloke
+              <span className="transition-colors duration-300 group-hover:text-white whitespace-nowrap">
+                SuperBloke {isAdvancedSearch ? "ON" : "OFF"}
               </span>
             </motion.div>
           </span>
