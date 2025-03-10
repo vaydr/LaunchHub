@@ -81,6 +81,9 @@ export default function SearchFilters({
   // Track active connection filter
   const activeConnectionFilter = connectionPerson ? connectionPerson.id : null;
 
+  // Add a state to track if animation is in progress to prevent spamming
+  const [isAnimating, setIsAnimating] = useState(false);
+
   // When filters change, trigger search with OR/AND logic
   useEffect(() => {
     // Group filters by type (OR within categories)
@@ -119,7 +122,7 @@ export default function SearchFilters({
         semantic: true // Flag for backend to handle semantic search
       } as ExtendedSearchParams);
     }
-  }, [query, advancedQuery, selectedFilters, isAdvancedSearch, onSearch]);
+  }, [query, advancedQuery, selectedFilters, isAdvancedSearch, onSearch, activeConnectionFilter]);
 
   // Update filters when connection person changes
   useEffect(() => {
@@ -180,25 +183,101 @@ export default function SearchFilters({
     }
   };
 
-  // Toggle between simple and advanced search with animation
+  // Modify the toggleSearchMode function to respect animation state
   const toggleSearchMode = () => {
+    if (isAnimating) return; // Prevent spamming
+    
+    setIsAnimating(true);
     setIsAdvancedSearch(prev => !prev);
+    
+    // Release animation lock after animation completes
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 800); // Slightly longer than animation duration
   };
 
   return (
     <div className="flex flex-col gap-4 mb-6">
+      {/* Title Section with animated plus sign and glowing magnifying glass */}
+      <div className="text-2xl font-bold flex items-center gap-2 mb-2 relative">
+        {/* Animated glowing magnifying glass icon */}
+        <motion.div
+          animate={{
+            filter: isAdvancedSearch ? "drop-shadow(0 0 8px rgba(147, 51, 234, 0.7))" : "drop-shadow(0 0 8px rgba(0,0,0, 0.7))",
+          }}
+          transition={{ 
+            duration: 0.75, 
+            ease: "easeInOut"
+          }}
+        >
+          <Search className={`h-6 w-6 ${isAdvancedSearch ? "text-purple-600" : "text-purple-600"}`} />
+        </motion.div>
+        
+        <div className="relative">
+          <span className="dark:text-white text-black select-none">
+            Directory Search
+          </span>
+          
+          {/* Mathematically positioned plus sign */}
+          <AnimatePresence>
+            {isAdvancedSearch && (
+              <div className="absolute" style={{ top: "2px", right: "-8px" }}>
+                {/* Plus container for precise measurement */}
+                <div className="relative" style={{ width: "10px", height: "10px" }}>
+                  {/* Vertical line - precisely centered */}
+                  <motion.div 
+                    className="absolute bg-black dark:bg-white"
+                    style={{ 
+                      width: "3px",         // Thicker line
+                      height: "0px",        // Initial height
+                      left: "50%",          // Center horizontally 
+                      top: "0",             // Start from top
+                      transform: "translateX(-50%)" // Adjust for line width
+                    }}
+                    initial={{ height: 0 }}
+                    animate={{ height: "10px" }}  // Full height of container
+                    exit={{ height: 0 }}
+                    transition={{ duration: 0.35, ease: "easeInOut" }}
+                  />
+                  
+                  {/* Horizontal line - precisely centered */}
+                  <motion.div 
+                    className="absolute bg-black dark:bg-white"
+                    style={{ 
+                      height: "3px",        // Thicker line
+                      width: "0px",         // Initial width
+                      top: "50%",           // Center vertically
+                      left: "0",            // Start from left
+                      transform: "translateY(-50%)" // Adjust for line height
+                    }}
+                    initial={{ width: 0 }}
+                    animate={{ width: "10px" }}  // Full width of container
+                    exit={{ width: 0 }}
+                    transition={{ duration: 0.35, delay: 0.35, ease: "easeInOut" }}
+                  />
+                </div>
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
       {/* Search mode toggle */}
-      <div className="flex justify-end">
+      <div className="flex justify-start">
         <Button 
           variant="outline" 
           size="sm" 
           onClick={toggleSearchMode}
-          className="relative"
+          className="relative overflow-hidden group"
         >
-          {isAdvancedSearch ? 
-            <><Search className="h-4 w-4 mr-2" /> Simple Search</> : 
-            <><Sparkles className="h-4 w-4 mr-2" /> Advanced Search</>
-          }
+          <span className="relative z-10 flex items-center group-hover:text-white transition-colors duration-300">
+            {isAdvancedSearch ? 
+              <><Search className="h-4 w-4 mr-2" /> Simple Search</> : 
+              <><Sparkles className="h-4 w-4 mr-2" /> Advanced Search</>
+            }
+          </span>
+          
+          {/* Background overlay that transitions to purple */}
+          <span className="absolute inset-0 bg-purple-600 transform origin-left transition-transform duration-300 ease-out scale-x-0 group-hover:scale-x-100"></span>
         </Button>
       </div>
 

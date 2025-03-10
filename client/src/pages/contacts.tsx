@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -40,6 +40,9 @@ export default function Contacts() {
   // Add refs to prevent multiple state updates
   const isUpdatingSettings = useRef(false);
   const isUpdatingProfile = useRef(false);
+
+  // Add state and handler for tracking advanced search mode
+  const [isAdvancedSearchMode, setIsAdvancedSearchMode] = useState(false);
 
   // Update temp values when settings modal opens or underlying values change
   useEffect(() => {
@@ -383,6 +386,16 @@ export default function Contacts() {
     );
   }, [isSettingsOpen, closeSettings, tempItemsPerPage, tempTheme, handleTempItemsPerPageChange, handleTempThemeToggle, applySettings]);
 
+  // Handle search params changes including advanced search mode
+  const handleSearchParamsChange = (params: Partial<any>) => {
+    // Check if the search mode has changed
+    if (params.semantic !== undefined && params.semantic !== isAdvancedSearchMode) {
+      setIsAdvancedSearchMode(params.semantic);
+    }
+    
+    setSearchParams(prevParams => ({ ...prevParams, ...params }));
+  };
+
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-950">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -413,17 +426,9 @@ export default function Contacts() {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Search className="h-6 w-6 text-purple-600" />
-                <span>Directory Search</span>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <SearchFilters 
-              onSearch={(params) => setSearchParams(prevParams => ({ ...prevParams, ...params }))}
+              onSearch={handleSearchParamsChange}
               connectionPerson={activeConnectionFilter ? contacts.find((c: Contact) => c.id === activeConnectionFilter) ?? null : null}
               onClearConnectionFilter={() => setActiveConnectionFilter(null)}
             />
