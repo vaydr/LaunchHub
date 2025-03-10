@@ -78,6 +78,7 @@ export default function ContactTable({
             <TableHead>Picture</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Relationship</TableHead>
+            <TableHead>Tags</TableHead>
             <TableHead>Contact</TableHead>
           </TableRow>
         </TableHeader>
@@ -95,6 +96,9 @@ export default function ContactTable({
                 onClick={() => handleContactClick(contact)}
               >
                 {contact.name}
+              </TableCell>
+              <TableCell onClick={() => handleContactClick(contact)}>
+                Strength {contact.interactionStrength?.toFixed(2)} relationship.
               </TableCell>
               <TableCell onClick={() => handleContactClick(contact)}>
                 <div className="flex flex-wrap gap-1">

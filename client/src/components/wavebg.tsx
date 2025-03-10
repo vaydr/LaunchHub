@@ -27,7 +27,7 @@ const WaveBG = () => {
       <div 
         className="absolute inset-0" 
         style={{
-          background: 'linear-gradient(-45deg, #6600ff, #1a00ff, #9d00ff, #3c00ff, #7700ff, #0033ff)',
+          background: 'linear-gradient(-45deg, rgba(102, 0, 255, 0.8), rgba(26, 0, 255, 0.8), rgba(157, 0, 255, 0.8), rgba(60, 0, 255, 0.8), rgba(119, 0, 255, 0.8), rgba(0, 51, 255, 0.8))',
           backgroundSize: '300% 300%',
           animation: 'gradient 75s ease infinite',
           isolation: 'isolate',
@@ -308,6 +308,30 @@ class SvgGraph extends Graph {
   private NODE_EDGE: string[] = ["0,0,0"]; // Edge colors for nodes
   private EDGE_COLOR: string[] = ["0,0,0"]; // Colors for edges
   
+  // Array of GitHub avatar profile pictures
+  private AVATAR_URLS: string[] = [
+    "https://avatars.githubusercontent.com/u/1?v=4",
+    "https://avatars.githubusercontent.com/u/17?v=4",
+    "https://avatars.githubusercontent.com/u/18?v=4",
+    "https://avatars.githubusercontent.com/u/19?v=4",
+    "https://avatars.githubusercontent.com/u/20?v=4",
+    "https://avatars.githubusercontent.com/u/25?v=4",
+    "https://avatars.githubusercontent.com/u/30?v=4",
+    "https://avatars.githubusercontent.com/u/35?v=4",
+    "https://avatars.githubusercontent.com/u/37?v=4",
+    "https://avatars.githubusercontent.com/u/40?v=4",
+    "https://avatars.githubusercontent.com/u/45?v=4",
+    "https://avatars.githubusercontent.com/u/50?v=4",
+    "https://avatars.githubusercontent.com/u/55?v=4",
+    "https://avatars.githubusercontent.com/u/60?v=4",
+    "https://avatars.githubusercontent.com/u/65?v=4",
+    "https://avatars.githubusercontent.com/u/70?v=4",
+    "https://avatars.githubusercontent.com/u/75?v=4",
+    "https://avatars.githubusercontent.com/u/80?v=4",
+    "https://avatars.githubusercontent.com/u/85?v=4",
+    "https://avatars.githubusercontent.com/u/90?v=4"
+  ];
+  
   public setOutput(svg: Element): SvgGraph {
     let br = svg.getBoundingClientRect();
     this.setDimensions(
@@ -330,6 +354,10 @@ class SvgGraph extends Graph {
     return colorArray[Math.floor(Math.random() * colorArray.length)];
   }
   
+  private getRandomAvatar(): string {
+    return this.AVATAR_URLS[Math.floor(Math.random() * this.AVATAR_URLS.length)];
+  }
+  
   public redrawOutput(): void {
     if (this.svgElem === null)
       throw new Error("Invalid state");
@@ -347,28 +375,7 @@ class SvgGraph extends Graph {
       return result;
     }
     
-    // Draw every node
-    for (const node of this.nodes) {
-      // Assign random colors if not already assigned
-      if (!node.fillColor) {
-        node.fillColor = this.getRandomColor(this.NODE_FILL);
-      }
-      if (!node.edgeColor) {
-        node.edgeColor = this.getRandomColor(this.NODE_EDGE);
-      }
-      
-      // Create the node with fill and stroke
-      gElem.append(createSvgElem("circle", {
-        "cx": node.posX,
-        "cy": node.posY,
-        "r": node.radius,
-        "fill": `rgba(${node.fillColor},${node.opacity.toFixed(3)})`,
-        "stroke": `rgba(${node.edgeColor},${node.opacity.toFixed(3)})`,
-        "stroke-width": "0.001",
-      }));
-    }
-    
-    // Draw every edge
+    // Draw every edge FIRST
     for (const edge of this.edges) {
       const a: GNode = edge.nodeA;
       const b: GNode = edge.nodeB;
@@ -381,19 +388,73 @@ class SvgGraph extends Graph {
         edge.color = this.getRandomColor(this.EDGE_COLOR);
       }
       
-      if (mag > a.radius + b.radius) {  // Draw edge only if circles don't intersect
-        dx /= mag;  // Make (dx, dy) a unit vector, pointing from B to A
-        dy /= mag;
-        const opacity: number = Math.min(Math.min(a.opacity, b.opacity), edge.opacity);
-        gElem.append(createSvgElem("line", {
-          "x1": a.posX - dx * a.radius,
-          "y1": a.posY - dy * a.radius,
-          "x2": b.posX + dx * b.radius,
-          "y2": b.posY + dy * b.radius,
-          "stroke": `rgba(${edge.color},${opacity.toFixed(3)})`,
-          "stroke-width": "0.002",
-        }));
+      // Draw edge as a line
+      gElem.append(createSvgElem("line", {
+        "x1": a.posX,
+        "y1": a.posY,
+        "x2": b.posX,
+        "y2": b.posY,
+        "stroke": `rgba(${edge.color},${Math.min(a.opacity, b.opacity, edge.opacity).toFixed(3)})`,
+        "stroke-width": "0.0015",
+      }));
+    }
+    
+    // Draw every node SECOND (so they appear on top)
+    for (const node of this.nodes) {
+      // Assign random colors if not already assigned
+      if (!node.fillColor) {
+        node.fillColor = this.getRandomColor(this.NODE_FILL);
+        // Assign a random avatar URL
+        (node as any).avatarUrl = this.getRandomAvatar();
       }
+      if (!node.edgeColor) {
+        node.edgeColor = this.getRandomColor(this.NODE_EDGE);
+      }
+      
+      // Create a group for the node
+      const nodeGroup = createSvgElem("g", {
+        "transform": `translate(${node.posX - node.radius},${node.posY - node.radius})`,
+        "opacity": node.opacity.toFixed(3)
+      });
+      
+      // Create a clipPath for the circular avatar
+      const clipPathId = `clip-${node.posX}-${node.posY}`;
+      const clipPath = createSvgElem("clipPath", {
+        "id": clipPathId
+      });
+      
+      const clipCircle = createSvgElem("circle", {
+        "cx": node.radius,
+        "cy": node.radius,
+        "r": node.radius
+      });
+      
+      clipPath.appendChild(clipCircle);
+      
+      // Create the image element for the avatar
+      const image = createSvgElem("image", {
+        "href": (node as any).avatarUrl,
+        "width": node.radius * 2,
+        "height": node.radius * 2,
+        "clip-path": `url(#${clipPathId})`,
+        "preserveAspectRatio": "xMidYMid slice"
+      });
+      
+      // Create the circle for the border
+      const circle = createSvgElem("circle", {
+        "cx": node.radius,
+        "cy": node.radius,
+        "r": node.radius,
+        "fill": "none",
+        "stroke": `rgba(${node.edgeColor},${node.opacity.toFixed(3)})`,
+        "stroke-width": "0.001"
+      });
+      
+      // Add the clipPath and elements to the SVG
+      nodeGroup.appendChild(clipPath);
+      nodeGroup.appendChild(image);
+      nodeGroup.appendChild(circle);
+      gElem.appendChild(nodeGroup);
     }
   }
 }
