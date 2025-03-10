@@ -40,8 +40,8 @@ export class MemStorage implements IStorage {
       const hasInstagram = Math.random() < 0.5;
       const hasPhone = Math.random() < 0.5;
 
-      const interactionSummary = faker.lorem.sentence();
-
+      const interactionSummary = faker.lorem.paragraph();
+      const notes = faker.lorem.sentence();
       this.contacts.set(id, {
         id,
         name,
@@ -49,8 +49,8 @@ export class MemStorage implements IStorage {
         email: `${kerberos}@mit.edu`,
         year: year ?? null,
         role,
-        notes: `Research interests in ${department}`,
-        interactionStrength: Math.floor(Math.random() * 10),
+        notes,
+        interactionStrength: (Math.random() * 10),
         interactionSummary,
         picture: picture,
         linkedin: hasLinkedin ? `https://www.linkedin.com/in/${kerberos}` : null,
