@@ -1,7 +1,6 @@
-
 interface OverlayProps {
     background: string | React.CSSProperties;
-    textColor: string;
+    textColor: string | React.CSSProperties;
     sections: {
       title: string;
       content: string;
@@ -13,6 +12,24 @@ interface OverlayProps {
     const backgroundStyle = typeof background === 'string' 
       ? { background } 
       : background;
+    
+    const textColorStyle = typeof textColor === 'string'
+      ? { color: textColor }
+      : textColor;
+    
+    // Determine paragraph text color based on textColor
+    const getParagraphStyle = () => {
+      if (typeof textColor === 'string') {
+        // For simple string colors, use Tailwind classes
+        return { color: textColor === 'white' ? 'rgb(209, 213, 219)' : 'rgb(17, 24, 39)' };
+      } else if (textColor.WebkitTextFillColor === 'transparent') {
+        // For gradient text, use a slightly lighter color for paragraphs
+        return { ...textColorStyle, opacity: 0.9 };
+      } else {
+        // Default case
+        return textColorStyle;
+      }
+    };
   
     return (
       <div
@@ -25,12 +42,14 @@ interface OverlayProps {
           ...backgroundStyle,
         }}
       >
-        <div className={`container mx-auto px-4 py-24 text-${textColor}`}>
+        <div className="container mx-auto px-4 py-24">
           <div className="max-w-4xl mx-auto space-y-24">
             {sections.map((section, index) => (
               <section key={index}>
-                <h2 className="text-4xl font-bold mb-6">{section.title}</h2>
-                <p className={`text-lg ${textColor === 'white' ? 'text-gray-300' : 'text-gray-900'}`}>
+                <h2 className="text-4xl font-bold mb-6" style={textColorStyle}>
+                  {section.title}
+                </h2>
+                <p className="text-lg" style={getParagraphStyle()}>
                   {section.content}
                 </p>
               </section>

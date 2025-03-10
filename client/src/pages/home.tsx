@@ -1,138 +1,161 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-
+import WaveBG from "@/components/wavebg";
+import Overlay from "@/components/overlay";
+import Title from "@/components/title";
+import Subtext from "@/components/subtext";
+import ActionButton from "@/components/actionbutton";
+import AuthModal from "@/components/authmodal";
 export default function Home() {
   const [_, setLocation] = useLocation();
   const overlayRef = useRef<HTMLDivElement>(null);
-
+  const secondOverlayRef = useRef<HTMLDivElement>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
   useEffect(() => {
     const handleScroll = () => {
-      if (overlayRef.current) {
+      if (overlayRef.current && secondOverlayRef.current) {
         const scrolled = window.scrollY;
         const viewportHeight = window.innerHeight;
         const translateY = Math.max(0, viewportHeight - scrolled);
         overlayRef.current.style.transform = `translateY(${translateY}px)`;
+        const secondTranslateY = Math.max(0, viewportHeight * 2 - scrolled);
+        secondOverlayRef.current.style.transform = `translateY(${secondTranslateY}px)`;
       }
     };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  return (
-    <div className="relative min-h-[200vh]">
-      {/* Tech-themed Animated Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-600 via-purple-900 to-indigo-900 animate-gradient">
-        <div className="absolute inset-0 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] opacity-10">
-          {Array.from({ length: 100 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-square border border-white/10 animate-pulse"
-              style={{
-                animationDelay: `${Math.random() * 4}s`,
-                animationDuration: `${4 + Math.random() * 4}s`
-              }}
-            />
-          ))}
-        </div>
-        <div className="absolute inset-0 animate-matrix">
-          <svg className="w-full h-full opacity-5">
-            <pattern
-              id="matrix"
-              x="0"
-              y="0"
-              width="20"
-              height="20"
-              patternUnits="userSpaceOnUse"
-            >
-              <rect width="20" height="20" fill="none" />
-              <text
-                x="10"
-                y="10"
-                fontSize="10"
-                fill="currentColor"
-                textAnchor="middle"
-                dominantBaseline="middle"
-              >
-                ⚡
-              </text>
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#matrix)" />
-          </svg>
-        </div>
-      </div>
+  const sections = [
+    {
+      title: "Smart Contact Management",
+      content: "Keep track of your network within the MIT community with our intelligent contact management system. Never lose touch with important connections."
+    },
+    {
+      title: "Track Meaningful Interactions",
+      content: "Record and measure the strength of your interactions. Build stronger relationships over time with smart reminders and insights."
+    },
+    {
+      title: "Future Integrations",
+      content: "Coming soon: Connect with Outlook, Gmail, and other platforms to automatically sync your contacts and interactions across all your communication channels."
+    }
+  ];
+  const gradientBackground = {
+    background: 'linear-gradient(-45deg, #6600ff, #1a00ff, #9d00ff, #3c00ff, #7700ff, #0033ff)',
+    backgroundSize: '300% 300%',
+    animation: 'gradient 150s ease infinite',
+    zIndex: 20,
+  };
+  const gradientText = {
+    background: 'linear-gradient(-45deg, #6600ff, #1a00ff, #9d00ff, #3c00ff, #7700ff, #0033ff)',
+    backgroundSize: '300% 300%',
+    animation: 'gradient 150s ease infinite',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+  };
 
-      {/* Hero Content */}
+  const emailIcon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+    </svg>
+  );
+
+  const networkIcon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
+    </svg>
+  );
+  const directoryIcon = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <ellipse cx="10" cy="5" rx="8" ry="3" />
+      <ellipse cx="10" cy="10" rx="8" ry="3" />
+      <ellipse cx="10" cy="15" rx="8" ry="3" />
+    </svg>
+  );
+
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+  };
+
+  return (
+    <div className="relative min-h-[300vh]">
+      <WaveBG />
       <div className="relative min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
-          <motion.h1 
-            className="text-5xl md:text-7xl font-bold text-white mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            MIT Directory
-          </motion.h1>
-          <motion.p 
-            className="text-xl text-white/80 max-w-2xl mx-auto mb-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
-            Connect with the MIT community. Track interactions. Build relationships.
-          </motion.p>
+          <Title />
+          <Subtext />
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
+            className="flex gap-4 justify-center"
           >
-            <Button
-              size="lg"
-              className="bg-white text-purple-900 hover:bg-white/90"
-              onClick={() => setLocation("/contacts")}
-            >
-              Open Directory
-            </Button>
+            <ActionButton 
+              text="View Network" 
+              onClick={() => setLocation("/network")} 
+              icon={networkIcon}
+            />
+            {isAuthenticated ? (
+              <ActionButton 
+                text="View Directory" 
+                onClick={() => setLocation("/contacts")} 
+                icon={directoryIcon}
+              />
+            ) : (
+              <ActionButton 
+                text="Sync Contacts" 
+                onClick={() => setShowAuthModal(true)} 
+                icon={emailIcon}
+              />
+            )}
           </motion.div>
         </div>
       </div>
 
-      {/* Black Overlay */}
-      <div 
-        ref={overlayRef}
-        className="fixed inset-0 bg-black"
-        style={{ 
-          transform: 'translateY(100vh)',
-          transition: 'transform 0.1s linear'
-        }}
-      >
-        <div className="container mx-auto px-4 py-24 text-white">
-          <div className="max-w-4xl mx-auto space-y-24">
-            <section>
-              <h2 className="text-4xl font-bold mb-6">Smart Contact Management</h2>
-              <p className="text-lg text-gray-300">
-                Keep track of your network within the MIT community with our intelligent contact management system. Never lose touch with important connections.
-              </p>
-            </section>
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal 
+          onClose={() => setShowAuthModal(false)} 
+          onSuccess={handleAuthSuccess} 
+        />
+      )}
 
-            <section>
-              <h2 className="text-4xl font-bold mb-6">Track Meaningful Interactions</h2>
-              <p className="text-lg text-gray-300">
-                Record and measure the strength of your interactions. Build stronger relationships over time with smart reminders and insights.
-              </p>
-            </section>
+      {/* First overlay - black background */}
+      <Overlay 
+        background="white"
+        textColor={gradientText}
+        sections={sections}
+        reference={overlayRef}
+      />
 
-            <section>
-              <h2 className="text-4xl font-bold mb-6">Future Integrations</h2>
-              <p className="text-lg text-gray-300">
-                Coming soon: Connect with Outlook, Gmail, and other platforms to automatically sync your contacts and interactions across all your communication channels.
-              </p>
-            </section>
-          </div>
-        </div>
-      </div>
+      {/* Second overlay - gradient background */}
+      <Overlay 
+        background={gradientBackground}
+        textColor="white"
+        sections={sections}
+        reference={secondOverlayRef}
+      />
     </div>
   );
 }

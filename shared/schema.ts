@@ -7,18 +7,20 @@ export const contacts = pgTable("contacts", {
   name: text("name").notNull(),
   kerberos: text("kerberos").notNull().unique(),
   email: text("email").notNull(),
-  department: text("department").notNull(),
   year: integer("year"),
   role: text("role").notNull(),
   notes: text("notes"),
   interactionStrength: integer("interaction_strength").default(0),
-  lastInteraction: timestamp("last_interaction"),
-  connections: jsonb("connections").$type<number[]>().default([]),
+  interactionSummary: text("interaction_summary"),
+  picture: text("picture"),
+  linkedin: text("linkedin"),
+  instagram: text("instagram"),
+  phone: text("phone"),
+  tags: text("tags").array(),
 });
 
 export const insertContactSchema = createInsertSchema(contacts).omit({
   id: true,
-  lastInteraction: true
 });
 
 export type InsertContact = z.infer<typeof insertContactSchema>;
@@ -36,29 +38,3 @@ export const searchParamsSchema = z.object({
 });
 
 export type SearchParams = z.infer<typeof searchParamsSchema>;
-
-// Network graph types
-export interface NetworkNode {
-  id: number;
-  name: string;
-  department: string;
-  year?: number;
-  group: string;
-  // Force graph simulation adds these properties
-  x?: number;
-  y?: number;
-  vx?: number;
-  vy?: number;
-  index?: number;
-}
-
-export interface NetworkLink {
-  source: number;
-  target: number;
-  value: number;
-}
-
-export interface NetworkGraph {
-  nodes: NetworkNode[];
-  links: NetworkLink[];
-}

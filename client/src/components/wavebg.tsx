@@ -29,7 +29,7 @@ const WaveBG = () => {
         style={{
           background: 'linear-gradient(-45deg, #6600ff, #1a00ff, #9d00ff, #3c00ff, #7700ff, #0033ff)',
           backgroundSize: '300% 300%',
-          animation: 'gradient 150s ease infinite',
+          animation: 'gradient 75s ease infinite',
           isolation: 'isolate',
         }}
       />
@@ -76,6 +76,8 @@ class GObject {
 class GNode extends GObject {
   public dPosX: number = 0;
   public dPosY: number = 0;
+  public fillColor: string = "";
+  public edgeColor: string = "";
   
   public constructor(
     public posX: number,
@@ -89,6 +91,8 @@ class GNode extends GObject {
 }
 
 class GEdge extends GObject {
+  public color: string = "";
+  
   public constructor(
     public nodeA: GNode,
     public nodeB: GNode
@@ -300,8 +304,10 @@ class Graph {
 
 class SvgGraph extends Graph {
   private svgElem: Element|null = null;
-  private NODE_COLOR: string = "255,255,255"; // White for nodes
-  private EDGE_COLOR: string = "255,255,255"; // White for edges
+  private NODE_FILL: string[] = ["150,0,255", "126,15,255", "157,0,255", "255,255,255", "150,150,255"]; // Fill colors for nodes
+  private NODE_EDGE: string[] = ["0,0,0"]; // Edge colors for nodes
+  private EDGE_COLOR: string[] = ["0,0,0"]; // Colors for edges
+  
   public setOutput(svg: Element): SvgGraph {
     let br = svg.getBoundingClientRect();
     this.setDimensions(
@@ -318,6 +324,10 @@ class SvgGraph extends Graph {
   public initSvgGraph(): void {
     this.initGraph();
     this.redrawOutput();
+  }
+  
+  private getRandomColor(colorArray: string[]): string {
+    return colorArray[Math.floor(Math.random() * colorArray.length)];
   }
   
   public redrawOutput(): void {
@@ -339,11 +349,22 @@ class SvgGraph extends Graph {
     
     // Draw every node
     for (const node of this.nodes) {
+      // Assign random colors if not already assigned
+      if (!node.fillColor) {
+        node.fillColor = this.getRandomColor(this.NODE_FILL);
+      }
+      if (!node.edgeColor) {
+        node.edgeColor = this.getRandomColor(this.NODE_EDGE);
+      }
+      
+      // Create the node with fill and stroke
       gElem.append(createSvgElem("circle", {
         "cx": node.posX,
         "cy": node.posY,
         "r": node.radius,
-        "fill": `rgba(${this.NODE_COLOR},${node.opacity.toFixed(3)})`,
+        "fill": `rgba(${node.fillColor},${node.opacity.toFixed(3)})`,
+        "stroke": `rgba(${node.edgeColor},${node.opacity.toFixed(3)})`,
+        "stroke-width": "0.001",
       }));
     }
     
@@ -354,6 +375,12 @@ class SvgGraph extends Graph {
       let dx: number = a.posX - b.posX;
       let dy: number = a.posY - b.posY;
       const mag: number = Math.hypot(dx, dy);
+      
+      // Assign random color if not already assigned
+      if (!edge.color) {
+        edge.color = this.getRandomColor(this.EDGE_COLOR);
+      }
+      
       if (mag > a.radius + b.radius) {  // Draw edge only if circles don't intersect
         dx /= mag;  // Make (dx, dy) a unit vector, pointing from B to A
         dy /= mag;
@@ -363,7 +390,7 @@ class SvgGraph extends Graph {
           "y1": a.posY - dy * a.radius,
           "x2": b.posX + dx * b.radius,
           "y2": b.posY + dy * b.radius,
-          "stroke": `rgba(${this.EDGE_COLOR},${opacity.toFixed(3)})`,
+          "stroke": `rgba(${edge.color},${opacity.toFixed(3)})`,
           "stroke-width": "0.002",
         }));
       }
