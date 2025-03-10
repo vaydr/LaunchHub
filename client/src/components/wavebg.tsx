@@ -329,7 +329,17 @@ class SvgGraph extends Graph {
     "https://avatars.githubusercontent.com/u/75?v=4",
     "https://avatars.githubusercontent.com/u/80?v=4",
     "https://avatars.githubusercontent.com/u/85?v=4",
-    "https://avatars.githubusercontent.com/u/90?v=4"
+    "https://avatars.githubusercontent.com/u/90?v=4",
+    "https://avatars.githubusercontent.com/u/95?v=4",
+    "https://avatars.githubusercontent.com/u/100?v=4",
+    "https://avatars.githubusercontent.com/u/105?v=4",
+    "https://avatars.githubusercontent.com/u/110?v=4",
+    "https://avatars.githubusercontent.com/u/115?v=4",
+    "https://avatars.githubusercontent.com/u/120?v=4",
+    "https://avatars.githubusercontent.com/u/125?v=4",
+    "https://avatars.githubusercontent.com/u/130?v=4",
+    "https://avatars.githubusercontent.com/u/135?v=4",
+    "https://avatars.githubusercontent.com/u/140?v=4"
   ];
   
   public setOutput(svg: Element): SvgGraph {

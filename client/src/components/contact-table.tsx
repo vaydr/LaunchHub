@@ -21,6 +21,7 @@ interface ContactTableProps {
   isLoading: boolean;
   currentPage: number;
   totalPages: number;
+  totalEntries: number;
   onPageChange: (page: number) => void;
   onFilterConnections: (id: number) => void;
   activeConnectionFilter: number | null;
@@ -31,6 +32,7 @@ export default function ContactTable({
   isLoading,
   currentPage,
   totalPages,
+  totalEntries,
   onPageChange,
   onFilterConnections,
   activeConnectionFilter
@@ -128,6 +130,7 @@ export default function ContactTable({
 
       {selectedContact && (
         <DetailedContactInfo 
+          key={selectedContact.id}
           contact={selectedContact}
           isOpen={isModalOpen}
           onClose={closeModal}
@@ -145,9 +148,14 @@ export default function ContactTable({
           >
             Previous
           </Button>
-          <span className="flex items-center text-sm">
-            {currentPage} / {totalPages}
-          </span>
+          <div className="flex flex-col items-center">
+            <span className="flex items-center text-sm">
+              {currentPage} / {totalPages}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {totalEntries} total {totalEntries === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
           <Button
             variant="outline"
             size="sm"

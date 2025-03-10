@@ -5,11 +5,16 @@ function Subtext() {
     const activities = [
       "found a B2B SaaS with",
       "lease your bedroom to",
-      "co-author a paper with",
+      "co-author your research",
       "take a hard class with",
+      "start something serious",
       "try something new with",
+      "talk about the universe",
+      "go to Newbury St. with",
+      "join a hackathon squad",
+      "be less depressed with",
+
     ];
-    
     const [index, setIndex] = useState(0);
     
     useEffect(() => {

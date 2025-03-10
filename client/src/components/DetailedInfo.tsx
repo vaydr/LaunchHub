@@ -1,31 +1,18 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { 
   Mail, 
   Linkedin, 
   Instagram, 
   Phone, 
   Plus, 
-  X, 
-  ArrowUp, 
-  ArrowDown, 
-  Check, 
-  AlertTriangle, 
-  ChevronsUp, 
-  ChevronsDown, 
-  ArrowUpFromLine, 
-  ArrowDownToLine,
-  Minus,
+  X,
   CheckCircle,
   Mail as MailIcon,
-  MessageCircle,
-  Users,
-  Calendar,
-  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Contact } from "@shared/schema";
+import InteractionStats, { generateSampleStats } from "./InteractionStats";
 
 interface DetailedContactInfoProps {
     contact: Contact;
@@ -51,21 +38,6 @@ interface DetailedContactInfoProps {
     { name: "Research Collaborator", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" }
   ];
   
-  // Enum for metric direction
-  enum MetricDirection {
-    ASCENDING = "ascending", // Higher is better (communities, mutual contacts)
-    DESCENDING = "descending" // Lower is better (unread messages)
-  }
-  
-  // Interface for a metric
-  interface InteractionMetric {
-    title: string;
-    value: number;
-    maxValue: number;
-    icon: React.ReactNode;
-    direction: MetricDirection;
-  }
-  
   function DetailedContactInfo({ contact, isOpen, onClose, onSave }: DetailedContactInfoProps) {
     const [notes, setNotes] = useState(contact.notes || "");
     const [tags, setTags] = useState<string[]>(contact.tags || []);
@@ -77,43 +49,8 @@ interface DetailedContactInfoProps {
       setTags(contact.tags || []);
     }, [contact]);
     
-    // Generate randomized interaction stats with appropriate ranges
-    const interactionStats = useMemo<InteractionMetric[]>(() => {
-      // Helper function to get random integer in range (inclusive)
-      const getRandomInRange = (min: number, max: number) => 
-        Math.floor(Math.random() * (max - min + 1)) + min;
-
-      return [
-        { 
-          title: "Shared Communities", 
-          value: getRandomInRange(1, 10),
-          maxValue: 10,
-          icon: <Users className="h-4 w-4" />,
-          direction: MetricDirection.ASCENDING
-        },
-        { 
-          title: "Mutual Contacts", 
-          value: getRandomInRange(3, 15),
-          maxValue: 20,
-          icon: <Users className="h-4 w-4" />,
-          direction: MetricDirection.ASCENDING
-        },
-        { 
-          title: "Unread Messages", 
-          value: getRandomInRange(0, 8),
-          maxValue: 10,
-          icon: <MessageCircle className="h-4 w-4" />,
-          direction: MetricDirection.DESCENDING
-        },
-        { 
-          title: "Meetings Attended", 
-          value: getRandomInRange(2, 10),
-          maxValue: 10,
-          icon: <Calendar className="h-4 w-4" />,
-          direction: MetricDirection.ASCENDING
-        }
-      ];
-    }, []);
+    // Generate interaction stats using the new component's function
+    const interactionStats = useMemo(() => generateSampleStats(), []);
     
     // Mock data for action items
     const actionItems = [
@@ -122,7 +59,7 @@ interface DetailedContactInfoProps {
       { text: "Ask about upcoming department event", priority: "low" }
     ];
     
-    const handleSaveChanges = () => {
+    const handleSaveChanges = useCallback(() => {
       const updatedContact = {
         ...contact,
         notes,
@@ -130,18 +67,18 @@ interface DetailedContactInfoProps {
       };
       onSave(updatedContact);
       onClose();
-    };
+    }, [contact, notes, tags, onSave, onClose]);
     
-    const addTag = (tag: string) => {
+    const addTag = useCallback((tag: string) => {
       if (!tags.includes(tag)) {
         setTags([...tags, tag]);
       }
       setIsTagPopoverOpen(false);
-    };
+    }, [tags, setTags]);
     
-    const removeTag = (tagToRemove: string) => {
+    const removeTag = useCallback((tagToRemove: string) => {
       setTags(tags.filter(tag => tag !== tagToRemove));
-    };
+    }, [tags, setTags]);
     
     // Filter available tags to exclude already selected ones
     const availableTags = relationshipTags.filter(tag => !tags.includes(tag.name));
@@ -163,23 +100,26 @@ interface DetailedContactInfoProps {
       return "Excellent";
     };
     
-    // Get appropriate unit for the metric
-    const getUnitForMetric = (metric: InteractionMetric): string => {
-      const title = metric.title.toLowerCase();
-      if (title.includes('messages')) return 'messages';
-      if (title.includes('communities')) return 'communities';
-      if (title.includes('contacts') || title.includes('mutuals')) return 'contacts';
-      if (title.includes('meetings')) return 'meetings';
-      if (title.includes('time')) return 'days';
-      return '';
+    // Get background color based on category
+    const getCategoryBgColor = (category: number) => {
+      switch (category) {
+        case -3: return "bg-red-100 dark:bg-red-900/30";
+        case -2: return "bg-red-50 dark:bg-red-800/20";
+        case -1: return "bg-red-50/50 dark:bg-red-800/10";
+        case 0: return "bg-gray-100 dark:bg-gray-800";
+        case 1: return "bg-green-50/50 dark:bg-green-800/10";
+        case 2: return "bg-green-50 dark:bg-green-800/20";
+        case 3: return "bg-green-100 dark:bg-green-900/30";
+        default: return "bg-gray-100 dark:bg-gray-800";
+      }
     };
     
     // Get rating category based on value and direction
-    const getRatingCategory = (value: number, maxValue: number, direction: MetricDirection): number => {
+    const getRatingCategory = (value: number, maxValue: number, direction: string): number => {
       // Get the threshold values (same as used in descriptions)
       const thresholds = [0.1, 0.25, 0.4, 0.6, 0.75, 0.9].map(t => Math.round(t * maxValue));
       
-      if (direction === MetricDirection.ASCENDING) {
+      if (direction === 'ascending') {
         // For ascending metrics (higher is better)
         if (value <= thresholds[0]) return -3; // Triple negative: 0-threshold[0]
         if (value <= thresholds[1]) return -2; // Double negative: threshold[0]+1 to threshold[1]
@@ -200,123 +140,6 @@ interface DetailedContactInfoProps {
       }
     };
     
-    // Get all category descriptions for a metric
-    const getCategoryDescriptions = (metric: InteractionMetric) => {
-      const title = metric.title.toLowerCase();
-      const maxValue = metric.maxValue;
-      const unit = getUnitForMetric(metric);
-      const direction = metric.direction;
-      
-      // Calculate threshold values as integers
-      const thresholds = [0.1, 0.25, 0.4, 0.6, 0.75, 0.9].map(t => Math.round(t * maxValue));
-      
-      if (direction === MetricDirection.ASCENDING) {
-        // For ascending metrics (HIGHER is BETTER)
-        return [
-          { name: "Triple positive", range: `${thresholds[5] + 1}+ ${unit}`, description: `Excellent ${title} metrics` },
-          { name: "Double positive", range: `${thresholds[4] + 1}-${thresholds[5]} ${unit}`, description: `Very good ${title} count` },
-          { name: "Single positive", range: `${thresholds[3] + 1}-${thresholds[4]} ${unit}`, description: `Good number of ${title}` },
-          { name: "Neutral", range: `${thresholds[2] + 1}-${thresholds[3]} ${unit}`, description: `Average number of ${title}` },
-          { name: "Single negative", range: `${thresholds[1] + 1}-${thresholds[2]} ${unit}`, description: `Below average ${title}` },
-          { name: "Double negative", range: `${thresholds[0] + 1}-${thresholds[1]} ${unit}`, description: `Warning: Low number of ${title}` },
-          { name: "Triple negative", range: `0-${thresholds[0]} ${unit}`, description: `Critical: Very low number of ${title}` }
-        ];
-      } else {
-        // For descending metrics (LOWER is BETTER)
-        return [
-          { name: "Triple positive", range: `0-${thresholds[0]} ${unit}`, description: `Excellent: Very few ${title}` },
-          { name: "Double positive", range: `${thresholds[0] + 1}-${thresholds[1]} ${unit}`, description: `Very good: Low number of ${title}` },
-          { name: "Single positive", range: `${thresholds[1] + 1}-${thresholds[2]} ${unit}`, description: `Good: Below average ${title}` },
-          { name: "Neutral", range: `${thresholds[2] + 1}-${thresholds[3]} ${unit}`, description: `Average number of ${title}` },
-          { name: "Single negative", range: `${thresholds[3] + 1}-${thresholds[4]} ${unit}`, description: `Warning: Above average ${title}` },
-          { name: "Double negative", range: `${thresholds[4] + 1}-${thresholds[5]} ${unit}`, description: `High alert: Too many ${title}` },
-          { name: "Triple negative", range: `${thresholds[5] + 1}+ ${unit}`, description: `Critical: Excessive ${title}` }
-        ];
-      }
-    };
-    
-    // Get tooltip header message based on category and metric
-    const getCategoryTooltip = (category: number, metric: InteractionMetric): string => {
-      const title = metric.title.toLowerCase();
-      const direction = metric.direction;
-      
-      if (direction === MetricDirection.ASCENDING) {
-        // For ascending metrics (higher is better)
-        switch (category) {
-          case -3: return `Critical: Very low number of ${title}. Immediate attention needed.`;
-          case -2: return `Warning: Low number of ${title}. Consider increasing engagement.`;
-          case -1: return `Below average ${title}. Slight improvement recommended.`;
-          case 0: return `Average number of ${title}.`;
-          case 1: return `Good number of ${title}. Slightly above average.`;
-          case 2: return `Very good ${title} count. Strong engagement.`;
-          case 3: return `Excellent ${title} metrics. Exceptional connection.`;
-          default: return `Information about ${title}.`;
-        }
-      } else {
-        // For descending metrics (lower is better)
-        switch (category) {
-          case 3: return `Excellent: Very few ${title}. Keep it up!`;
-          case 2: return `Very good: Low number of ${title}.`;
-          case 1: return `Good: Below average ${title}.`;
-          case 0: return `Average number of ${title}.`;
-          case -1: return `Warning: Above average ${title}. Consider responding soon.`;
-          case -2: return `High alert: Too many ${title}. Action needed.`;
-          case -3: return `Critical: Excessive ${title}. Immediate attention required.`;
-          default: return `Information about ${title}.`;
-        }
-      }
-    };
-    
-    // Get icon based on category
-    const getCategoryIcon = (category: number, className: string = "h-4 w-4") => {
-      switch (category) {
-        case -3: 
-          return <ArrowDownToLine className={`${className} text-red-600`} />;
-        case -2: 
-          return <ChevronsDown className={`${className} text-red-500`} />;
-        case -1: 
-          return <ArrowDown className={`${className} text-red-400`} />;
-        case 0: 
-          return <Minus className={`${className} text-gray-400`} />;
-        case 1: 
-          return <ArrowUp className={`${className} text-green-400`} />;
-        case 2:
-          return <ChevronsUp className={`${className} text-green-500`} />;
-        case 3:
-          return <ArrowUpFromLine className={`${className} text-green-600`} />;
-        default:
-          return <Minus className={`${className} text-gray-400`} />;
-      }
-    };
-    
-    // Get color based on category
-    const getCategoryColor = (category: number) => {
-      switch (category) {
-        case -3: return "text-red-600";
-        case -2: return "text-red-500";
-        case -1: return "text-red-400";
-        case 0: return "text-gray-500";
-        case 1: return "text-green-400";
-        case 2: return "text-green-500";
-        case 3: return "text-green-600";
-        default: return "text-gray-500";
-      }
-    };
-    
-    // Get background color based on category
-    const getCategoryBgColor = (category: number) => {
-      switch (category) {
-        case -3: return "bg-red-100 dark:bg-red-900/30";
-        case -2: return "bg-red-50 dark:bg-red-800/20";
-        case -1: return "bg-red-50/50 dark:bg-red-800/10";
-        case 0: return "bg-gray-100 dark:bg-gray-800";
-        case 1: return "bg-green-50/50 dark:bg-green-800/10";
-        case 2: return "bg-green-50 dark:bg-green-800/20";
-        case 3: return "bg-green-100 dark:bg-green-900/30";
-        default: return "bg-gray-100 dark:bg-gray-800";
-      }
-    };
-    
     // Get actual RGB color values for a category
     const getCategoryColorRGB = (category: number): string => {
       switch (category) {
@@ -329,70 +152,6 @@ interface DetailedContactInfoProps {
         case -3: return "240, 80, 70"; // Red for triple negative
         default: return "150, 150, 150"; // Default gray
       }
-    };
-    
-    // Reusable component for metric tooltip
-    const MetricTooltip = ({ metric, category }: { metric: InteractionMetric, category: number }) => {
-      return (
-        <TooltipContent side="left" className="p-4 max-w-xs">
-          <div className="space-y-2">
-            <p className="font-medium">
-              {getCategoryTooltip(category, metric)}
-            </p>
-            <div className="text-xs pt-2 border-t border-gray-200 dark:border-gray-700">
-              <p className="font-medium mb-2">Interaction Impact:</p>
-              <div className="grid grid-cols-1 gap-2">
-                {getCategoryDescriptions(metric).map((catDesc, i) => {
-                  // Map array index to category value based on direction
-                  const catValue = metric.direction === MetricDirection.ASCENDING
-                    ? 3 - i  // Ascending: 0=Triple positive(+3), 6=Triple negative(-3)
-                    : i === 0 ? 3 : i === 1 ? 2 : i === 2 ? 1 : i === 3 ? 0 : i === 4 ? -1 : i === 5 ? -2 : -3; // Descending
-                  
-                  return (
-                    <div 
-                      key={i} 
-                      className={`flex items-center gap-2 py-1 px-2 rounded ${
-                        category === catValue ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
-                      }`}
-                    >
-                      <div className="flex-shrink-0">
-                        {getCategoryIcon(catValue, "h-4 w-4")}
-                      </div>
-                      <span className="flex-grow text-xs">{catDesc.range}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </TooltipContent>
-      );
-    };
-    
-    // Reusable component for a single metric
-    const MetricDisplay = ({ metric }: { metric: InteractionMetric }) => {
-      const category = getRatingCategory(metric.value, metric.maxValue, metric.direction);
-      
-      return (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {metric.icon}
-            <span className="text-sm">
-              <span className="font-bold">{metric.value}</span> {metric.title.toLowerCase()}
-            </span>
-          </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <div className="flex items-center">
-                  {getCategoryIcon(category)}
-                </div>
-              </TooltipTrigger>
-              <MetricTooltip metric={metric} category={category} />
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      );
     };
     
     return (
@@ -430,13 +189,12 @@ interface DetailedContactInfoProps {
                         className="h-2.5 rounded-full" 
                         style={{ 
                           width: `${Math.min(100, contact.interactionStrength ? contact.interactionStrength * 10 : 0)}%`,
-                          backgroundColor: `rgb(${getCategoryColorRGB(getRatingCategory(contact.interactionStrength || 0, 10, MetricDirection.ASCENDING))})`
+                          backgroundColor: `rgb(${getCategoryColorRGB(getRatingCategory(contact.interactionStrength || 0, 10, 'ascending'))})`
                         }}
                       ></div>
                     </div>
                     <div className="text-xs flex justify-end mt-1 items-center gap-1">
-                      {getCategoryIcon(getRatingCategory(contact.interactionStrength || 0, 10, MetricDirection.ASCENDING))}
-                      <span className={getCategoryColor(getRatingCategory(contact.interactionStrength || 0, 10, MetricDirection.ASCENDING))}>
+                      <span>
                         {getInteractionRating(contact.interactionStrength || 0)}
                       </span>
                     </div>
@@ -490,12 +248,9 @@ interface DetailedContactInfoProps {
                 <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-lg mt-4 flex-grow">
                   <h4 className="font-medium text-slate-800 dark:text-slate-200 text-lg mb-3">Interaction Status</h4>
                   
-                  {/* Interaction Stats in the interaction status section */}
-                  <div className="space-y-3 mb-4">
-                    {/* Only show first 3 stats as requested */}
-                    {interactionStats.slice(0, 3).map((metric, i) => (
-                      <MetricDisplay key={i} metric={metric} />
-                    ))}
+                  {/* New InteractionStats component */}
+                  <div className="mb-4">
+                    <InteractionStats stats={interactionStats} />
                   </div>
                   
                   {/* Suggested Follow-ups in the interaction status section */}
@@ -594,6 +349,7 @@ interface DetailedContactInfoProps {
     );
   }
   
-  export default DetailedContactInfo;
+  const MemoizedDetailedContactInfo = React.memo(DetailedContactInfo);
 
+  export default MemoizedDetailedContactInfo;
   export { relationshipTags };

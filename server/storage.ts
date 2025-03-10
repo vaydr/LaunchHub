@@ -77,6 +77,12 @@ export class MemStorage implements IStorage {
       );
     }
 
+    if (params.departments && params.departments.length > 0) {
+      results = results.filter(contact =>
+        params.departments!.some(dept => contact.role.includes(dept))
+      );
+    }
+
     if (params.years && params.years.length > 0) {
       results = results.filter(contact =>
         contact.year && params.years!.includes(contact.year)
