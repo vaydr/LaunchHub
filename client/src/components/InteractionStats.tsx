@@ -4,6 +4,8 @@ import {
   ArrowDown, 
   ChevronUp, 
   ChevronDown,
+  ChevronsUp,
+  ChevronsDown,
   Minus,
   Users,
   MessageCircle,
@@ -89,13 +91,13 @@ const MetricDisplay = ({ metric }: { metric: InteractionMetric }) => {
               <p className="font-medium">{getRatingDescription(rating, metric)}</p>
               
               <div className="text-xs pt-2 border-t border-gray-200 dark:border-gray-700">
-                <p className="font-medium mb-2">Rating Scale:</p>
+                <p className="font-medium mb-2">Integration Impact:</p>
                 <div className="grid grid-cols-1 gap-2">
                   {getBucketDescriptions(metric).map((desc, i) => (
                     <div 
                       key={i} 
                       className={`flex items-center gap-2 py-1 px-2 rounded ${
-                        rating === desc.rating ? 'bg-gray-100 dark:bg-gray-800 font-medium' : ''
+                        rating === desc.rating ? getRatingBackgroundColor(desc.rating, true) + ' font-medium' : ''
                       }`}
                     >
                       <div className="flex-shrink-0">
@@ -142,11 +144,11 @@ function getRating(value: number, maxValue: number, direction: string): number {
 // Get icon based on rating
 function getRatingIcon(rating: number) {
   switch (rating) {
-    case -2: return <ChevronDown className="h-4 w-4 text-red-500" />;
-    case -1: return <ArrowDown className="h-4 w-4 text-red-400" />;
+    case -2: return <ChevronsDown className="h-4 w-4 text-red-600" />;
+    case -1: return <ChevronDown className="h-4 w-4 text-red-400" />;
     case 0: return <Minus className="h-4 w-4 text-gray-400" />;
-    case 1: return <ArrowUp className="h-4 w-4 text-green-400" />;
-    case 2: return <ChevronUp className="h-4 w-4 text-green-500" />;
+    case 1: return <ChevronUp className="h-4 w-4 text-green-400" />;
+    case 2: return <ChevronsUp className="h-4 w-4 text-green-600" />;
     default: return <Minus className="h-4 w-4 text-gray-400" />;
   }
 }
@@ -210,6 +212,20 @@ function getBucketDescriptions(metric: InteractionMetric) {
       { rating: -1, name: 'Poor', range: `${thresholds[2] + 1}-${thresholds[3]} ${unit}` },
       { rating: -2, name: 'Very Poor', range: `${thresholds[3] + 1}+ ${unit}` }
     ];
+  }
+}
+
+// Add a function to get background color based on rating
+function getRatingBackgroundColor(rating: number, isSelected: boolean = false) {
+  if (!isSelected) return '';
+  
+  switch (rating) {
+    case -2: return 'bg-red-100 dark:bg-red-900/30'; // Very Poor
+    case -1: return 'bg-red-50 dark:bg-red-800/20'; // Poor
+    case 0: return 'bg-gray-100 dark:bg-gray-500/20'; // Fair - changed to amber/yellow
+    case 1: return 'bg-green-50 dark:bg-green-800/20'; // Good
+    case 2: return 'bg-green-100 dark:bg-green-900/30'; // Very Good
+    default: return 'bg-gray-100 dark:bg-gray-800';
   }
 }
 

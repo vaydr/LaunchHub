@@ -8,11 +8,22 @@ import {
   X,
   CheckCircle,
   Mail as MailIcon,
+  User,
+  MapPin,
+  Building,
+  GraduationCap,
+  Calendar,
+  Link,
+  Clock,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { Contact } from "@shared/schema";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import InteractionStats, { generateSampleStats } from "./InteractionStats";
+import TagComponent, { relationshipTags } from "./TagComponent";
+import type { Contact } from "@shared/schema";
 
 interface DetailedContactInfoProps {
     contact: Contact;
@@ -21,22 +32,6 @@ interface DetailedContactInfoProps {
     
     onSave: (updatedContact: Contact) => void;
   }
-  
-  // Available relationship tags with their colors
-  const relationshipTags = [
-    { name: "Friend", color: "bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300" },
-    { name: "Classmate", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300" },
-    { name: "Groupmate", color: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300" },
-    { name: "Coworker", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300" },
-    { name: "Mentor", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300" },
-    { name: "Mentee", color: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300" },
-    { name: "Professor", color: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300" },
-    { name: "TA", color: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300" },
-    { name: "Advisor", color: "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300" },
-    { name: "Lab Partner", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300" },
-    { name: "Club Member", color: "bg-lime-100 text-lime-800 dark:bg-lime-900/40 dark:text-lime-300" },
-    { name: "Research Collaborator", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" }
-  ];
   
   function DetailedContactInfo({ contact, isOpen, onClose, onSave }: DetailedContactInfoProps) {
     const [notes, setNotes] = useState(contact.notes || "");
@@ -82,12 +77,6 @@ interface DetailedContactInfoProps {
     
     // Filter available tags to exclude already selected ones
     const availableTags = relationshipTags.filter(tag => !tags.includes(tag.name));
-    
-    // Get color for a tag
-    const getTagColor = (tagName: string) => {
-      const tag = relationshipTags.find(t => t.name === tagName);
-      return tag ? tag.color : "bg-purple-100 text-purple-800"; // Default color
-    };
     
     // Get interaction strength rating text
     const getInteractionRating = (strength: number) => {
@@ -297,21 +286,17 @@ interface DetailedContactInfoProps {
                   <div className="flex flex-wrap gap-2">
                     
                     {tags.map((tag) => (
-                      <div key={tag} className={`px-3 py-1.5 ${getTagColor(tag)} text-sm rounded-full flex items-center`}>
-                        {tag}
-                        <button 
-                          className="ml-2 hover:opacity-80"
-                          onClick={() => removeTag(tag)}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                      <TagComponent 
+                        key={tag} 
+                        tag={tag} 
+                        onRemove={() => removeTag(tag)} 
+                      />
                     ))}
                     
                     <Popover open={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
                       <PopoverTrigger asChild>
                         <button
-                          className="p-1.5 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
+                          className="p-1.5 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 cursor-pointer"
                           aria-label="Add tag"
                         >
                           <Plus className="h-5 w-5" />
@@ -323,7 +308,7 @@ interface DetailedContactInfoProps {
                             availableTags.map((tag) => (
                               <button
                                 key={tag.name}
-                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${tag.color}`}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${tag.color} cursor-pointer transition-colors`}
                                 onClick={() => addTag(tag.name)}
                               >
                                 {tag.name}
@@ -352,4 +337,3 @@ interface DetailedContactInfoProps {
   const MemoizedDetailedContactInfo = React.memo(DetailedContactInfo);
 
   export default MemoizedDetailedContactInfo;
-  export { relationshipTags };

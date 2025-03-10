@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { Contact } from "@shared/schema";
 import { ContactInfo } from "@/components/ContactIcon";
 import DetailedContactInfo from "@/components/DetailedInfo";
-import { relationshipTags } from "@/components/DetailedInfo";
+import { relationshipTags } from "@/components/TagComponent";
 
 interface ContactTableProps {
   contacts: Contact[];

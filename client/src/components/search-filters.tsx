@@ -12,6 +12,7 @@ import { X, Search, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { SearchParams } from "@shared/schema";
 import type { Contact } from "@shared/schema";
+import { FilterTag, getTagColor, relationshipTags } from "./TagComponent"; // Add relationshipTags import
 
 // Extended search params to include tags and semantic search
 interface ExtendedSearchParams extends SearchParams {
@@ -33,30 +34,16 @@ const DEPARTMENTS = [
 
 const YEARS = [2024, 2025, 2026, 2027];
 
-const TAGS = [
-  "Friend",
-  "Classmate", 
-  "Groupmate",
-  "Coworker",
-  "Mentor",
-  "Mentee",
-  "Professor",
-  "TA",
-  "Advisor",
-  "Lab Partner",
-  "Club Member",
-  "Research Collaborator"
-];
+// Use shared tag definitions
+const TAGS = relationshipTags.map(tag => tag.name);
 
-// Filter tag type
-interface FilterTag {
+// Update FilterTag interface to match the shared component
+interface SearchFilterTag {
   type: 'department' | 'year' | 'tag' | 'connection';
   value: string;
   label?: string;
-  color?: string;
 }
 
-// Props for the component
 interface SearchFiltersProps {
   onSearch: (params: Partial<ExtendedSearchParams>) => void;
   connectionPerson: Contact | null;
@@ -70,7 +57,7 @@ export default function SearchFilters({
 }: SearchFiltersProps) {
   // State
   const [query, setQuery] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState<FilterTag[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<SearchFilterTag[]>([]);
   const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
   const [advancedQuery, setAdvancedQuery] = useState("");
   
@@ -132,8 +119,7 @@ export default function SearchFilters({
         return [...withoutConnections, {
           type: 'connection',
           value: connectionPerson.id.toString(),
-          label: `Connected to: ${connectionPerson.name}`,
-          color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+          label: `Connected to: ${connectionPerson.name}`
         }];
       });
     } else {
@@ -141,39 +127,16 @@ export default function SearchFilters({
     }
   }, [connectionPerson]);
 
-  // Add a filter with OR logic within category
+  // Add a filter with OR logic within category - simplified to use shared function
   const handleAddFilter = (type: 'department' | 'year' | 'tag', value: string) => {
     // Only add if not already present
     if (!selectedFilters.some(f => f.type === type && f.value === value)) {
-      let color = '';
-      
-      // Special styling for tags
-      if (type === 'tag') {
-        switch (value) {
-          case 'Friend': color = 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'; break;
-          case 'Classmate': color = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'; break;
-          case 'Groupmate': color = 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'; break;
-          case 'Coworker': color = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'; break;
-          case 'Mentor': color = 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300'; break;
-          case 'Mentee': color = 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'; break;
-          case 'Professor': color = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'; break;
-          case 'TA': color = 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'; break;
-          case 'Advisor': color = 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300'; break;
-          case 'Lab Partner': color = 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300'; break;
-          default: color = 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-        }
-      } else if (type === 'department') {
-        color = 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
-      } else if (type === 'year') {
-        color = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
-      }
-      
-      setSelectedFilters(prev => [...prev, { type, value, color }]);
+      setSelectedFilters(prev => [...prev, { type, value }]);
     }
   };
 
   // Remove a filter
-  const handleRemoveFilter = (filter: FilterTag) => {
+  const handleRemoveFilter = (filter: SearchFilterTag) => {
     if (filter.type === 'connection') {
       onClearConnectionFilter();
     } else {
@@ -183,17 +146,16 @@ export default function SearchFilters({
     }
   };
 
-  // Modify the toggleSearchMode function to respect animation state
+  // Toggle search mode with animation
   const toggleSearchMode = () => {
-    if (isAnimating) return; // Prevent spamming
+    if (isAnimating) return;
     
     setIsAnimating(true);
-    setIsAdvancedSearch(prev => !prev);
+    setIsAdvancedSearch(!isAdvancedSearch);
     
-    // Release animation lock after animation completes
     setTimeout(() => {
       setIsAnimating(false);
-    }, 800); // Slightly longer than animation duration
+    }, 300); // match animation duration
   };
 
   return (
@@ -261,22 +223,53 @@ export default function SearchFilters({
           </AnimatePresence>
         </div>
       </div>
-      {/* Search mode toggle */}
+      {/* Search mode toggle with animated sparkles and text */}
       <div className="flex justify-start">
         <Button 
           variant="outline" 
           size="sm" 
           onClick={toggleSearchMode}
-          className="relative overflow-hidden group"
+          className={`
+            relative overflow-hidden
+            ${isAdvancedSearch ? 'border-purple-500' : 'border-gray-300 dark:border-gray-700'}
+            group
+          `}
         >
-          <span className="relative z-10 flex items-center group-hover:text-white transition-colors duration-300">
-            {isAdvancedSearch ? 
-              <><Search className="h-4 w-4 mr-2" /> Simple Search</> : 
-              <><Sparkles className="h-4 w-4 mr-2" /> Advanced Search</>
-            }
+          <span className="relative z-10 flex items-center">
+            {/* Create a motion.div wrapper for text animation */}
+            <motion.div 
+              className="flex items-center w-full transition-colors duration-300"
+              animate={{ 
+                color: isAdvancedSearch ? "#9333ea" : "#64748b"
+              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
+              {/* Animated sparkles icon */}
+              <motion.div
+                className="mr-2 flex items-center justify-center transition-colors duration-300"
+                animate={{ 
+                  color: isAdvancedSearch ? "#9333ea" : "#64748b",
+                  scale: isAdvancedSearch ? 1.1 : 1,
+                }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              >
+                <Sparkles 
+                  className={`
+                    h-4 w-4 transition-all duration-300
+                    ${isAdvancedSearch ? "fill-purple-500 stroke-purple-600" : ""} 
+                    group-hover:fill-white group-hover:stroke-white
+                  `} 
+                />
+              </motion.div>
+              
+              {/* Use a span for the text with direct group-hover class */}
+              <span className="transition-colors duration-300 group-hover:text-white">
+                SuperBloke
+              </span>
+            </motion.div>
           </span>
           
-          {/* Background overlay that transitions to purple */}
+          {/* Background overlay for hover */}
           <span className="absolute inset-0 bg-purple-600 transform origin-left transition-transform duration-300 ease-out scale-x-0 group-hover:scale-x-100"></span>
         </Button>
       </div>
@@ -340,9 +333,13 @@ export default function SearchFilters({
                   <SelectValue placeholder="Add Tag" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TAGS.map((tag) => (
-                    <SelectItem key={tag} value={tag}>
-                      {tag}
+                  {relationshipTags.map((tag) => (
+                    <SelectItem 
+                      key={tag.name} 
+                      value={tag.name}
+                      className={`${tag.color} rounded-md my-0.5 cursor-pointer transition-colors`}
+                    >
+                      {tag.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -374,21 +371,13 @@ export default function SearchFilters({
       {selectedFilters.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
           {selectedFilters.map((filter, index) => (
-            <div
+            <FilterTag
               key={`${filter.type}-${filter.value}-${index}`}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm shadow-sm 
-                         ${filter.color || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'}`}
-            >
-              <span>{filter.label || `${filter.type === 'department' ? 'Dept: ' : filter.type === 'year' ? 'Year: ' : ''}${filter.value}`}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 ml-1"
-                onClick={() => handleRemoveFilter(filter)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
+              type={filter.type}
+              value={filter.value}
+              label={filter.label}
+              onRemove={() => handleRemoveFilter(filter)}
+            />
           ))}
           
           {selectedFilters.length > 0 && (
