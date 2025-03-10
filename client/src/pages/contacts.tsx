@@ -171,6 +171,7 @@ export default function Contacts() {
                   id="darkMode"
                   checked={tempTheme === 'dark'}
                   onCheckedChange={handleTempThemeToggle}
+                  className="data-[state=checked]:bg-purple-600"
                 />
                 {tempTheme === 'dark' ? (
                   <Moon className="h-4 w-4 dark:text-white" />

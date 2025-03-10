@@ -75,7 +75,7 @@ export default function ContactTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Picture</TableHead>
+            <TableHead></TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Relationship</TableHead>
             <TableHead>Tags</TableHead>
@@ -136,7 +136,7 @@ export default function ContactTable({
       )}
 
       {totalPages > 1 && (
-        <div className="flex justify-center gap-4 mt-4">
+        <div className="flex justify-center items-center gap-4 mt-4">
           <Button
             variant="outline"
             size="sm"
@@ -145,7 +145,7 @@ export default function ContactTable({
           >
             Previous
           </Button>
-          <span>
+          <span className="flex items-center text-sm">
             {currentPage} / {totalPages}
           </span>
           <Button
