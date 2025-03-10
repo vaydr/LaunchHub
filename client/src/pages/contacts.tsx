@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { SearchParams } from "@shared/schema";
 import type { Contact } from "@shared/schema";
@@ -14,8 +14,8 @@ import SettingsModal from "@/components/settings-modal";
 
 // Hooks
 import usePagination from "@/hooks/use-pagination";
-import useThemeSettings from "@/hooks/use-theme-settings";
 import useProfileModal from "@/hooks/use-profile-modal";
+import { useTheme } from "@/contexts/theme-context";
 
 // Utils
 import { getSocialCreditColorRGB, getSocialCreditDescription } from "@/utils/social-credit-utils";
@@ -34,19 +34,53 @@ export default function Contacts() {
   // Advanced search mode state
   const [isAdvancedSearchMode, setIsAdvancedSearchMode] = useState(false);
 
-  // Get theme and settings from hook
-  const {
-    theme,
-    itemsPerPage,
-    isSettingsOpen,
-    tempTheme,
-    tempItemsPerPage,
-    openSettings,
-    closeSettings,
-    handleTempThemeToggle,
-    handleTempItemsPerPageChange,
-    applySettings
-  } = useThemeSettings();
+  // Get theme from global context
+  const { theme, toggleTheme } = useTheme();
+  
+  // Settings state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [tempItemsPerPage, setTempItemsPerPage] = useState(itemsPerPage);
+  
+  // Initialize itemsPerPage from localStorage on mount
+  useEffect(() => {
+    const savedItemsPerPage = localStorage.getItem('itemsPerPage');
+    if (savedItemsPerPage) {
+      setItemsPerPage(parseInt(savedItemsPerPage));
+      setTempItemsPerPage(parseInt(savedItemsPerPage));
+    }
+  }, []);
+  
+  // Update temp values when settings modal opens
+  useEffect(() => {
+    if (isSettingsOpen) {
+      setTempItemsPerPage(itemsPerPage);
+    }
+  }, [isSettingsOpen, itemsPerPage]);
+
+  // Settings handlers
+  const openSettings = () => setIsSettingsOpen(true);
+  const closeSettings = () => setIsSettingsOpen(false);
+  
+  const handleTempItemsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (value > 0) {
+      setTempItemsPerPage(value);
+    }
+  };
+  
+  const handleThemeToggle = () => {
+    toggleTheme();
+  };
+  
+  const applyItemsPerPage = () => {
+    // Apply items per page
+    setItemsPerPage(tempItemsPerPage);
+    localStorage.setItem('itemsPerPage', tempItemsPerPage.toString());
+    
+    // Close modal
+    setIsSettingsOpen(false);
+  };
 
   // Get profile modal state from hook
   const {
@@ -152,10 +186,10 @@ export default function Contacts() {
         isOpen={isSettingsOpen}
         onClose={closeSettings}
         tempItemsPerPage={tempItemsPerPage}
-        tempTheme={tempTheme}
+        theme={theme}
         onTempItemsPerPageChange={handleTempItemsPerPageChange}
-        onTempThemeToggle={handleTempThemeToggle}
-        onApplySettings={applySettings}
+        onThemeToggle={handleThemeToggle}
+        onApplySettings={applyItemsPerPage}
       />
     </ContactsContainer>
   );

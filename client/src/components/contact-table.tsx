@@ -148,9 +148,9 @@ export default function ContactTable({
       
       // Generate scores that are influenced by the overall score but still have some variation
       return {
-        frequency: Math.min(10, Math.max(0, baseScore + (getSeededRandom(seed) * 4 - 2))).toFixed(1),
-        semantics: Math.min(10, Math.max(0, baseScore + (getSeededRandom(seed + 1) * 4 - 2))).toFixed(1),
-        referral: Math.min(10, Math.max(0, baseScore + (getSeededRandom(seed + 2) * 4 - 2))).toFixed(1)
+        frequency: Math.min(10, Math.max(0, baseScore + (getSeededRandom(seed) * 4 - 2))).toFixed(2),
+        semantics: Math.min(10, Math.max(0, baseScore + (getSeededRandom(seed + 1) * 4 - 2))).toFixed(2),
+        referral: Math.min(10, Math.max(0, baseScore + (getSeededRandom(seed + 2) * 4 - 2))).toFixed(2)
       };
     }, [contact.id, contact.interactionStrength]);
     
@@ -159,7 +159,7 @@ export default function ContactTable({
     const getScoreColor = (score: number) => getRatingColor(getScoreRating(score));
     
     return (
-      <div className="absolute z-50 -top-2 left-10 bg-white dark:bg-gray-800 p-3 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 w-56">
+      <div className="absolute z-100 -top-2 left-10 bg-white dark:bg-gray-800 p-3 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 w-56">
         <div className="space-y-2">
           <h4 className="font-medium text-sm mb-2">Relationship Factors</h4>
           
@@ -203,7 +203,7 @@ export default function ContactTable({
               <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Overall:</span>
               <div className="flex items-center gap-1">
                 <span className={`font-medium ${getRatingColor(getRelationshipRating(contact.interactionStrength))}`}>
-                  {contact.interactionStrength?.toFixed(1) || "0.0"}
+                  {contact.interactionStrength?.toFixed(2) || "0.0"}
                 </span>
                 <span className="text-xs text-gray-500">/10</span>
               </div>
@@ -260,7 +260,7 @@ export default function ContactTable({
                     {/* Strength value with color */}
                     <div className="flex items-center gap-1">
                       <span className={`font-medium ${getRatingColor(getRelationshipRating(contact.interactionStrength))}`}>
-                        {contact.interactionStrength?.toFixed(1) || "0.0"}
+                        {contact.interactionStrength?.toFixed(2) || "0.0"}
                       </span>
                       <span className="text-sm text-gray-500">/ 10</span>
                     </div>

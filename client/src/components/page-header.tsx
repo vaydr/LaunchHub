@@ -12,10 +12,11 @@ export default function PageHeader({ onOpenProfile, onOpenSettings }: PageHeader
   const [_, setLocation] = useLocation();
 
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center transition-colors duration-300">
       <Button 
         variant="outline"
         onClick={() => setLocation("/")}
+        className="transition-colors duration-300"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Home
@@ -25,6 +26,7 @@ export default function PageHeader({ onOpenProfile, onOpenSettings }: PageHeader
           variant="outline"
           size="icon"
           onClick={onOpenProfile}
+          className="transition-colors duration-300"
         >
           <User className="h-4 w-4" />
         </Button>
@@ -32,6 +34,7 @@ export default function PageHeader({ onOpenProfile, onOpenSettings }: PageHeader
           variant="outline"
           size="icon"
           onClick={onOpenSettings}
+          className="transition-colors duration-300"
         >
           <Settings className="h-4 w-4" />
         </Button>

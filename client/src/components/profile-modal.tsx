@@ -25,9 +25,9 @@ export default function ProfileModal({
   
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md transition-colors duration-300">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">My Profile</DialogTitle>
+          <DialogTitle className="text-2xl font-bold transition-colors duration-300">My Profile</DialogTitle>
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-6 py-4">
@@ -41,13 +41,13 @@ export default function ProfileModal({
                   className="h-full w-full object-cover"
                 />
               </div>
-              <h3 className="text-lg font-medium">John Doe</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">MIT Research Lab</p>
+              <h3 className="text-lg font-medium transition-colors duration-300">John Doe</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-300">MIT Research Lab</p>
             </div>
             
             <Button 
               variant="outline" 
-              className="w-full flex items-center justify-center"
+              className="w-full flex items-center justify-center transition-colors duration-300"
               onClick={() => setLocation("/")}
             >
               <LogOut className="h-4 w-4 mr-2" />
@@ -57,18 +57,18 @@ export default function ProfileModal({
           
           {/* Right Column */}
           <div className="space-y-4">
-            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-              <h4 className="font-medium text-sm mb-2">Social Credit Score</h4>
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg transition-colors duration-300">
+              <h4 className="font-medium text-sm mb-2 transition-colors duration-300">Social Credit Score</h4>
               <div className="text-2xl font-bold mb-2 flex justify-between items-center">
-                <span style={{ color: `rgb(${getSocialCreditColorRGB(socialCreditScore)})` }}>
+                <span style={{ color: `rgb(${getSocialCreditColorRGB(socialCreditScore)})` }} className="transition-colors duration-300">
                   {socialCreditScore}
                 </span>
-                <span className="text-xs">/1000</span>
+                <span className="text-xs text-gray-500 transition-colors duration-300">/1000</span>
               </div>
               
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-2">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-2 transition-colors duration-300">
                 <div 
-                  className="h-2.5 rounded-full" 
+                  className="h-2.5 rounded-full transition-colors duration-300" 
                   style={{ 
                     width: `${(socialCreditScore / 1000) * 100}%`,
                     backgroundColor: `rgb(${getSocialCreditColorRGB(socialCreditScore)})`
@@ -76,23 +76,23 @@ export default function ProfileModal({
                 ></div>
               </div>
               
-              <p className="text-xs mt-2" style={{ color: `rgb(${getSocialCreditColorRGB(socialCreditScore)})` }}>
+              <p className="text-xs mt-2 transition-colors duration-300" style={{ color: `rgb(${getSocialCreditColorRGB(socialCreditScore)})` }}>
                 {getSocialCreditDescription(socialCreditScore)}
               </p>
             </div>
             
-            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-              <h4 className="font-medium text-sm mb-2">Account Status</h4>
-              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                <div className="h-2 w-2 rounded-full bg-green-600 dark:bg-green-400"></div>
-                <span className="text-sm font-medium">Active</span>
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg transition-colors duration-300">
+              <h4 className="font-medium text-sm mb-2 transition-colors duration-300">Account Status</h4>
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400 transition-colors duration-300">
+                <div className="h-2 w-2 rounded-full bg-green-600 dark:bg-green-400 transition-colors duration-300"></div>
+                <span className="text-sm font-medium transition-colors duration-300">Active</span>
               </div>
             </div>
           </div>
         </div>
         
         <DialogFooter>
-          <Button onClick={onClose}>
+          <Button onClick={onClose} className="transition-colors duration-300">
             Close
           </Button>
         </DialogFooter>
