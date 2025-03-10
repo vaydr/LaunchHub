@@ -1,4 +1,3 @@
-
 interface AuthModalProps {
     onClose: () => void;
     onSuccess: () => void;
@@ -6,13 +5,13 @@ interface AuthModalProps {
   
   function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
-          <h2 className="text-2xl font-bold mb-4">Sign In</h2>
-          <p className="mb-6">Connect your accounts to get the most out of Bloke!</p>
+      <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50">
+        <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-xl max-w-md w-full">
+          <h2 className="text-2xl font-bold mb-4 dark:text-white">Sign In</h2>
+          <p className="mb-6 dark:text-gray-300">Connect your accounts to get the most out of Bloke!</p>
           <div className="space-y-4">
             <button 
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded flex items-center justify-center gap-2"
+              className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center justify-center gap-2 transition-colors"
               onClick={onSuccess}
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -21,7 +20,7 @@ interface AuthModalProps {
               Continue with Email
             </button>
             <button 
-              className="w-full py-2 px-4 bg-red-600 text-white rounded flex items-center justify-center gap-2"
+              className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded flex items-center justify-center gap-2 transition-colors"
               onClick={onSuccess}
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -30,7 +29,7 @@ interface AuthModalProps {
               Continue with Gmail
             </button>
             <button 
-              className="w-full py-2 px-4 bg-blue-800 text-white rounded flex items-center justify-center gap-2"
+              className="w-full py-2 px-4 bg-blue-800 hover:bg-blue-900 text-white rounded flex items-center justify-center gap-2 transition-colors"
               onClick={onSuccess}
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -39,7 +38,7 @@ interface AuthModalProps {
               Continue with Outlook
             </button>
             <button 
-              className="w-full py-2 px-4 bg-gray-800 text-white rounded flex items-center justify-center gap-2"
+              className="w-full py-2 px-4 bg-gray-800 hover:bg-gray-900 text-white rounded flex items-center justify-center gap-2 transition-colors"
               onClick={onSuccess}
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -49,7 +48,7 @@ interface AuthModalProps {
             </button>
           </div>
           <button 
-            className="mt-6 text-sm text-gray-600 hover:text-gray-800"
+            className="mt-6 text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors cursor-pointer"
             onClick={onClose}
           >
             Cancel

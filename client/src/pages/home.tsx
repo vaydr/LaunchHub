@@ -112,21 +112,24 @@ export default function Home() {
             className="flex gap-4 justify-center"
           >
             <ActionButton 
-              text="View Network" 
+              text={isAuthenticated ? "My Network" : "View Network"}
               onClick={() => setLocation("/network")} 
               icon={networkIcon}
+              variant={isAuthenticated ? "gradient" : "default"}
             />
             {isAuthenticated ? (
               <ActionButton 
                 text="View Directory" 
                 onClick={() => setLocation("/contacts")} 
                 icon={directoryIcon}
+                variant="outline"
               />
             ) : (
               <ActionButton 
                 text="Sync Contacts" 
                 onClick={() => setShowAuthModal(true)} 
                 icon={emailIcon}
+                variant="outline"
               />
             )}
           </motion.div>

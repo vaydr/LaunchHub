@@ -151,6 +151,22 @@ export default function SearchFilters({
     if (isAnimating) return;
     
     setIsAnimating(true);
+    
+    // If switching TO advanced search, clear all filters
+    if (!isAdvancedSearch) {
+      setSelectedFilters([]);
+      // Keep connection filter if present
+      if (connectionPerson) {
+        setTimeout(() => {
+          setSelectedFilters([{
+            type: 'connection',
+            value: connectionPerson.id.toString(),
+            label: `Connected to: ${connectionPerson.name}`
+          }]);
+        }, 50);
+      }
+    }
+    
     setIsAdvancedSearch(!isAdvancedSearch);
     
     setTimeout(() => {
